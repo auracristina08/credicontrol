@@ -1,0 +1,2068 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CrediControl</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap');
+:root{
+  --bg:#f5f3ee;--surface:#fff;--surface2:#f0ede6;--border:#e2ddd4;--border2:#ccc8be;
+  --text:#1a1916;--text2:#6b6760;--text3:#9c9890;
+  --green:#2d6a4f;--green-bg:#d8f3dc;
+  --red:#9b2335;--red-bg:#fde8eb;
+  --amber:#92480a;--amber-bg:#fef3e2;
+  --blue:#1a4e8c;--blue-bg:#e8f1fc;
+  --accent:#3d5a80;--accent-h:#2c4266;
+  --purple:#5e3ea1;--purple-bg:#ede9ff;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px}
+.hdr{background:var(--text);color:#fff;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:200}
+.brand{font-family:'DM Serif Display',serif;font-size:21px;color:#fff}.brand span{color:#a8c4e0}
+.nav{display:flex;gap:2px}
+.nb{background:none;border:none;color:#999;font-family:'DM Sans',sans-serif;font-size:13px;padding:6px 12px;border-radius:6px;cursor:pointer;transition:all .15s}
+.nb:hover{background:rgba(255,255,255,.1);color:#fff}.nb.on{background:rgba(255,255,255,.15);color:#fff}
+.main{padding:1.5rem;max-width:1120px;margin:0 auto}
+.page{display:none}.page.on{display:block}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:1.8rem}
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.3rem}
+.sc-lbl{font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.sc-val{font-size:26px;font-weight:600;line-height:1}.sc-sub{font-size:12px;color:var(--text3);margin-top:3px}
+.sc.g .sc-val{color:var(--green)}.sc.r .sc-val{color:var(--red)}.sc.b .sc-val{color:var(--blue)}
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem}
+.st{font-size:17px;font-weight:600}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1.5rem}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{background:var(--surface2);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text2);padding:9px 13px;text-align:left;border-bottom:1px solid var(--border)}
+td{padding:11px 13px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}tr:hover td{background:var(--surface2)}
+.bdg{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.bg{background:var(--green-bg);color:var(--green)}.br{background:var(--red-bg);color:var(--red)}
+.ba{background:var(--amber-bg);color:var(--amber)}.bb{background:var(--blue-bg);color:var(--blue)}
+.bgr{background:var(--surface2);color:var(--text2)}
+.dchip{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;margin:2px}
+.d5{background:#fff3e0;color:#e65100}.d15{background:#e8eaf6;color:#283593}.d30{background:#e0f7fa;color:#00695c}
+.dother{background:var(--surface2);color:var(--text2)}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 15px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .15s}
+.btn-p{background:var(--accent);color:#fff}.btn-p:hover{background:var(--accent-h)}
+.btn-o{background:#fff;color:var(--text);border:1px solid var(--border2)}.btn-o:hover{background:var(--surface2)}
+.btn-g{background:var(--green-bg);color:var(--green);border:1px solid #a3d9b1}.btn-g:hover{background:#c3eacc}
+.btn-r{background:var(--red-bg);color:var(--red);border:1px solid #f5c0c8}.btn-r:hover{background:#fad5da}
+.btn-a{background:var(--amber-bg);color:var(--amber);border:1px solid #f0c78a}.btn-a:hover{background:#fde5b8}
+.bsm{padding:5px 10px;font-size:12px;border-radius:6px}
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:500;align-items:center;justify-content:center;padding:1rem}
+.ov.on{display:flex}
+.modal{background:var(--surface);border-radius:16px;width:100%;max-width:600px;max-height:92vh;overflow-y:auto;padding:1.8rem;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal.wide{max-width:780px}
+.mtitle{font-size:17px;font-weight:600;margin-bottom:1.3rem}
+.fg{margin-bottom:1rem}
+label{font-size:13px;font-weight:500;color:var(--text2);display:block;margin-bottom:4px}
+input,select,textarea{width:100%;padding:8px 11px;border:1px solid var(--border2);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;background:#fff;color:var(--text);transition:border .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.frow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px}
+.mfooter{display:flex;justify-content:flex-end;gap:9px;margin-top:1.3rem;padding-top:1rem;border-top:1px solid var(--border)}
+.upzone{border:2px dashed var(--border2);border-radius:10px;padding:1.2rem;text-align:center;cursor:pointer;transition:all .15s;background:var(--surface2)}
+.upzone:hover{border-color:var(--accent);background:var(--blue-bg)}
+.upzone input[type=file]{display:none}
+.uzlbl{font-size:13px;color:var(--text2);margin-top:6px}
+.doclist{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+.docchip{background:var(--blue-bg);color:var(--blue);border-radius:8px;padding:4px 10px;font-size:12px;display:inline-flex;align-items:center;gap:5px}
+.docchip button{background:none;border:none;color:var(--red);cursor:pointer;font-size:13px;line-height:1}
+.tabs{display:flex;gap:3px;border-bottom:2px solid var(--border);margin-bottom:1.3rem}
+.tb{padding:7px 16px;background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.tb.on{color:var(--accent);border-bottom-color:var(--accent)}.tb:hover{color:var(--text)}
+.tc{display:none}.tc.on{display:block}
+.alert{padding:9px 13px;border-radius:8px;font-size:13px;margin-bottom:1rem;display:flex;align-items:flex-start;gap:7px}
+.ai{background:var(--blue-bg);color:var(--blue)}.as{background:var(--green-bg);color:var(--green)}
+.aw{background:var(--amber-bg);color:var(--amber)}.ar{background:var(--red-bg);color:var(--red)}
+.crow{display:grid;grid-template-columns:34px 105px 1fr 1fr 1fr 1fr 130px;gap:10px;align-items:center;padding:9px 13px;border-bottom:1px solid var(--border);font-size:13px}
+.crow.ch{background:var(--surface2);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text2);border-radius:8px 8px 0 0}
+.crow.cpg{background:#f7fdf8}.crow.cvn{background:#fff8f8}
+.nc{width:26px;height:26px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--text2)}
+.pb{background:var(--border);border-radius:99px;height:6px;overflow:hidden;min-width:70px}
+.pbf{height:100%;border-radius:99px;background:var(--green);transition:width .3s}
+.comp-preview{max-width:220px;max-height:160px;border-radius:8px;margin-top:6px;border:1px solid var(--border)}
+.empty{text-align:center;padding:3.5rem 2rem;color:var(--text3)}
+.empty .ico{font-size:44px;margin-bottom:.8rem}.empty p{margin-bottom:1rem;font-size:15px}
+.money{font-variant-numeric:tabular-nums}
+.tr{text-align:right}
+.mt2{margin-top:1rem}.mt3{margin-top:1.5rem}
+.sdiv{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin:1.2rem 0 .6rem;padding-bottom:.4rem;border-bottom:1px solid var(--border)}
+.contrato-body{font-size:13px;line-height:1.8;color:#222}
+.contrato-body h3{font-size:14px;margin:1rem 0 .3rem;font-weight:700}
+.contrato-body p{margin-bottom:.4rem}
+.firma-box{border-top:1px solid #999;padding-top:.5rem;text-align:center;font-size:12px;color:#555}
+/* Login */
+#login-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:10000;flex-direction:column;gap:0}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2.5rem 2.2rem;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.12)}
+.login-brand{font-family:'DM Serif Display',serif;font-size:28px;text-align:center;margin-bottom:6px}
+.login-brand span{color:var(--accent)}.login-sub{text-align:center;font-size:13px;color:var(--text2);margin-bottom:1.8rem}
+.login-err{background:var(--red-bg);color:var(--red);border-radius:8px;padding:8px 12px;font-size:13px;margin-bottom:1rem;display:none}
+/* Loading */
+#loading-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:12px}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.saving-toast{position:fixed;bottom:20px;right:20px;background:var(--text);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;z-index:9998;display:none;animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<!-- PANTALLA LOGIN -->
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="login-brand">Credi<span>Control</span></div>
+    <div class="login-sub">Gestión de préstamos · Acceso privado</div>
+    <div class="login-err" id="login-err">Usuario o contraseña incorrectos</div>
+    <div class="fg"><label>Usuario</label><input type="text" id="login-user" placeholder="Usuario" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="fg"><label>Contraseña</label><input type="password" id="login-pass" placeholder="Contraseña" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn btn-p" style="width:100%;justify-content:center;margin-top:.5rem;padding:10px" onclick="doLogin()">Ingresar</button>
+    <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:1rem">Configura el usuario y contraseña en la línea APP_USER / APP_PASS del código</div>
+  </div>
+</div>
+
+<!-- PANTALLA DE CARGA -->
+<div id="loading-overlay">
+  <div style="font-family:'DM Serif Display',serif;font-size:26px">Credi<span style="color:var(--accent)">Control</span></div>
+  <div class="spinner"></div>
+  <div style="font-size:13px;color:var(--text2)">Conectando con la base de datos...</div>
+</div>
+
+<div id="saving-toast" class="saving-toast">Guardando...</div>
+
+<header class="hdr">
+  <div class="brand">Credi<span>Control</span></div>
+  <nav class="nav">
+    <button class="nb on" onclick="showPage('dashboard')">Inicio</button>
+    <button class="nb" onclick="showPage('clientes')">Clientes</button>
+    <button class="nb" onclick="showPage('prestamos')">Préstamos</button>
+    <button class="nb" onclick="showPage('cobros')">Cobros</button>
+    <button class="nb" onclick="showPage('reportes')" style="color:#a8c4e0">Reportes</button>
+    <button class="nb" onclick="exportarExcel()" title="Exportar todo a Excel" style="color:#a8c4e0;font-size:18px;padding:6px 10px">⬇</button>
+    <button class="nb" onclick="doLogout()" title="Cerrar sesión" style="color:#a8c4e0;font-size:16px;padding:6px 10px">⏻</button>
+  </nav>
+</header>
+<main class="main">
+
+<div id="page-dashboard" class="page on">
+  <div style="margin-bottom:1.5rem">
+    <h1 style="font-family:'DM Serif Display',serif;font-size:27px;font-weight:400">Panel principal</h1>
+    <p style="color:var(--text2);font-size:13px;margin-top:3px" id="fecha-hoy"></p>
+  </div>
+  <div class="sgrid" id="stats-grid"></div>
+  <div class="sh"><span class="st">Cobros proximos 7 dias</span></div>
+  <div class="card" id="cobros-semana-table"></div>
+</div>
+
+<div id="page-clientes" class="page">
+  <div class="sh"><span class="st">Clientes</span><button class="btn btn-p" onclick="abrirModalCliente()">+ Nuevo cliente</button></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem;align-items:center">
+    <input type="text" id="buscar-cliente" placeholder="Buscar nombre, cédula, teléfono, notas..." style="max-width:320px" oninput="renderClientes()">
+    <button class="btn btn-o bsm on-filter" onclick="filtrarDia(this,'')" data-dia="">Todos</button>
+    <button class="btn btn-o bsm" onclick="filtrarDia(this,'5')" data-dia="5"><span class="dchip d5">Dia 5</span></button>
+    <button class="btn btn-o bsm" onclick="filtrarDia(this,'15')" data-dia="15"><span class="dchip d15">Dia 15</span></button>
+    <button class="btn btn-o bsm" onclick="filtrarDia(this,'30')" data-dia="30"><span class="dchip d30">Dia 30</span></button>
+    <button class="btn btn-o bsm" onclick="filtrarDia(this,'otro')" data-dia="otro">Otro dia</button>
+  </div>
+  <div class="card" id="tabla-clientes"></div>
+</div>
+
+<div id="page-prestamos" class="page">
+  <div id="lista-prest-view">
+    <div class="sh"><span class="st">Préstamos</span><button class="btn btn-p" onclick="abrirModalPrestamo()">+ Nuevo préstamo</button></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem">
+      <select id="filtro-est-p" onchange="renderPrestamos()" style="width:150px">
+        <option value="">Todos</option><option value="activo">Activos</option>
+        <option value="atrasado">Atrasados</option><option value="pagado">Pagados</option>
+      </select>
+      <input type="text" id="buscar-prest" placeholder="Buscar cliente..." oninput="renderPrestamos()" style="max-width:240px">
+    </div>
+    <div class="card" id="tabla-prestamos"></div>
+  </div>
+  <div id="detalle-prest-view" style="display:none"></div>
+</div>
+
+<div id="page-cobros" class="page">
+  <div class="sh"><span class="st">Cobros</span></div>
+  <div id="cobros-content"></div>
+</div>
+
+<div id="page-reportes" class="page">
+  <div style="margin-bottom:1.5rem;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1 style="font-family:'DM Serif Display',serif;font-size:27px;font-weight:400">Reportes</h1>
+      <p style="color:var(--text2);font-size:13px;margin-top:3px">Rentabilidad y analisis del negocio</p>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-o bsm rep-filter on-rep" onclick="setRepPeriodo(this,'mes')">Este mes</button>
+      <button class="btn btn-o bsm rep-filter" onclick="setRepPeriodo(this,'anio')">Este año</button>
+      <button class="btn btn-o bsm rep-filter" onclick="setRepPeriodo(this,'todo')">Todo</button>
+      <button class="btn btn-o bsm rep-filter" onclick="setRepPeriodo(this,'custom')">Personalizado</button>
+      <div id="rep-custom-range" style="display:none;gap:6px;align-items:center;display:none">
+        <input type="date" id="rep-desde" style="width:140px;padding:5px 9px;font-size:12px" onchange="renderReportes()">
+        <span style="font-size:12px;color:var(--text2)">→</span>
+        <input type="date" id="rep-hasta" style="width:140px;padding:5px 9px;font-size:12px" onchange="renderReportes()">
+      </div>
+    </div>
+  </div>
+
+  <!-- KPIs principales -->
+  <div class="sgrid" id="rep-kpis"></div>
+
+  <!-- Fila de gráficos -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1.5rem" id="rep-charts-row">
+    <div class="card" style="padding:1.3rem">
+      <div style="font-size:13px;font-weight:600;margin-bottom:1rem;color:var(--text2)">INGRESOS POR MES (intereses cobrados)</div>
+      <canvas id="chart-ingresos" height="200"></canvas>
+    </div>
+    <div class="card" style="padding:1.3rem">
+      <div style="font-size:13px;font-weight:600;margin-bottom:1rem;color:var(--text2)">DISTRIBUCIÓN DE CARTERA</div>
+      <canvas id="chart-cartera" height="200"></canvas>
+    </div>
+  </div>
+
+  <!-- Pareto -->
+  <div class="sh"><span class="st">Análisis Pareto — Top clientes por ingresos</span></div>
+  <div class="card" id="rep-pareto"></div>
+
+  <!-- Detalle financiero -->
+  <div class="sh mt2"><span class="st">Resumen financiero del período</span></div>
+  <div class="card" id="rep-resumen"></div>
+
+  <!-- Exportación -->
+  <div class="card" style="padding:1.5rem;margin-bottom:1.5rem">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <div style="font-weight:600;font-size:15px">Exportar a Excel</div>
+        <div style="font-size:13px;color:var(--text2);margin-top:3px">Descarga toda la información en un archivo .xlsx para consultar sin conexión a internet. Incluye 5 hojas: Resumen, Clientes, Préstamos, Pagos e historial de amortización.</div>
+      </div>
+      <button class="btn btn-g" onclick="exportarExcel()" style="font-size:15px;padding:10px 22px;white-space:nowrap">
+        ⬇ Exportar Excel
+      </button>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- MODAL CLIENTE -->
+<div class="ov" id="modal-cliente">
+<div class="modal wide">
+  <div class="mtitle" id="modal-cli-title">Nuevo cliente</div>
+  <div class="sdiv">Datos personales</div>
+  <div class="frow">
+    <div class="fg"><label>Nombre completo *</label><input type="text" id="cli-nombre" placeholder="Juan Carlos Perez"></div>
+    <div class="fg"><label>Cedula / ID</label><input type="text" id="cli-cedula" placeholder="Numero de documento"></div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label>Telefono</label><input type="text" id="cli-tel" placeholder="Numero de contacto"></div>
+    <div class="fg"><label>Ciudad / Barrio</label><input type="text" id="cli-ciudad" placeholder="Donde vive"></div>
+  </div>
+  <div class="fg"><label>Recomendado por (nombre de quien refiere, o N/A)</label><input type="text" id="cli-ref" placeholder="N/A"></div>
+  <div class="fg"><label>Notas adicionales</label><textarea id="cli-notas" rows="2" placeholder="Trabajo, referencias, observaciones..."></textarea></div>
+  <div class="sdiv">Dia y metodo de pago</div>
+  <div class="frow3">
+    <div class="fg">
+      <label>Dia habitual de pago</label>
+      <select id="cli-dia-pago" onchange="toggleDiaCustom()">
+        <option value="5">Dia 5</option><option value="15">Dia 15</option>
+        <option value="30" selected>Dia 30</option><option value="otro">Otro dia</option>
+      </select>
+    </div>
+    <div class="fg" id="fg-dia-custom" style="display:none">
+      <label>Dia especifico (1-28)</label>
+      <input type="number" id="cli-dia-custom" min="1" max="28" placeholder="Ej. 20">
+    </div>
+    <div class="fg">
+      <label>Metodo de pago preferido</label>
+      <select id="cli-metodo-pago" onchange="toggleCuenta()">
+        <option value="efectivo">Efectivo</option>
+        <option value="nequi">Nequi</option>
+        <option value="bancolombia">Bancolombia</option>
+        <option value="daviplata">Daviplata</option>
+        <option value="bre-b">Bre-B</option>
+        <option value="pse">PSE</option>
+        <option value="otro">Otro</option>
+      </select>
+    </div>
+  </div>
+  <div class="fg" id="fg-cuenta" style="display:none">
+    <label>Numero de cuenta / celular para transferencias</label>
+    <input type="text" id="cli-cuenta" placeholder="Cuenta o numero de celular">
+  </div>
+  <div class="sdiv">Documentos adjuntos</div>
+  <div class="frow">
+    <div class="fg">
+      <label>Cedula (foto o PDF)</label>
+      <div class="upzone" onclick="document.getElementById('file-cedula').click()">
+        <div style="font-size:24px">ID</div>
+        <div class="uzlbl">Toca para cargar la cedula</div>
+        <input type="file" id="file-cedula" accept="image/*,.pdf" onchange="subirDoc('cedula',this)">
+      </div>
+      <div class="doclist" id="docs-cedula"></div>
+    </div>
+    <div class="fg">
+      <label>Letra de cambio / Pagare</label>
+      <div class="upzone" onclick="document.getElementById('file-letra').click()">
+        <div style="font-size:24px">Pag</div>
+        <div class="uzlbl">Toca para cargar el documento</div>
+        <input type="file" id="file-letra" accept="image/*,.pdf" onchange="subirDoc('letra',this)">
+      </div>
+      <div class="doclist" id="docs-letra"></div>
+    </div>
+  </div>
+  <div class="mfooter">
+    <button class="btn btn-o" onclick="cerrarModal('modal-cliente')">Cancelar</button>
+    <button class="btn btn-p" onclick="guardarCliente()">Guardar cliente</button>
+  </div>
+</div>
+</div>
+
+<!-- MODAL PRESTAMO -->
+<div class="ov" id="modal-prestamo">
+<div class="modal wide">
+  <div class="mtitle">Nuevo préstamo</div>
+  <div class="fg"><label>Cliente *</label><select id="pres-cliente" onchange="autoFillDiaPago()"></select></div>
+  <div class="frow">
+    <div class="fg"><label>Capital prestado ($) *</label><input type="number" id="pres-capital" placeholder="500000" oninput="calcPreview()"></div>
+    <div class="fg"><label>Abono fijo al capital por cuota ($) *</label><input type="number" id="pres-cuota-cap" placeholder="100000" oninput="calcPreview()"></div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label>Tasa de interes por cuota (%)</label><input type="number" id="pres-tasa" value="10" min="0" max="100" oninput="calcPreview()"></div>
+    <div class="fg"><label>Frecuencia de pago</label>
+      <select id="pres-freq" onchange="calcPreview()">
+        <option value="30">Mensual (30 dias)</option>
+        <option value="15">Quincenal (15 dias)</option>
+        <option value="7">Semanal (7 dias)</option>
+      </select>
+    </div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label>Fecha primera cuota *</label><input type="date" id="pres-fecha" oninput="calcPreview()"></div>
+    <div class="fg"><label>Observaciones</label><input type="text" id="pres-obs" placeholder="Motivo, garantia..."></div>
+  </div>
+  <div id="vista-previa" style="display:none"></div>
+  <div class="mfooter">
+    <button class="btn btn-o" onclick="cerrarModal('modal-prestamo')">Cancelar</button>
+    <button class="btn btn-p" onclick="guardarPrestamo()">Crear préstamo</button>
+  </div>
+</div>
+</div>
+
+<!-- MODAL ABONO -->
+<div class="ov" id="modal-abono">
+<div class="modal">
+  <div class="mtitle">Registrar pago</div>
+  <div id="abono-info"></div>
+  <div class="frow">
+    <div class="fg"><label>Abono a interes ($)</label><input type="number" id="ab-interes" placeholder="0" oninput="calcAbonoTotal()"></div>
+    <div class="fg"><label>Abono a capital ($)</label><input type="number" id="ab-capital" placeholder="0" oninput="calcAbonoTotal()"></div>
+  </div>
+  <div class="alert ai" id="ab-total">Total: $0</div>
+  <div class="alert aw" id="ab-saldo-aviso" style="display:none"></div>
+  <div class="frow">
+    <div class="fg"><label>Fecha del pago</label><input type="date" id="ab-fecha"></div>
+    <div class="fg"><label>Metodo de pago</label>
+      <select id="ab-metodo" onchange="toggleComprobante()">
+        <option value="efectivo">Efectivo</option>
+        <option value="nequi">Nequi</option>
+        <option value="bancolombia">Bancolombia</option>
+        <option value="daviplata">Daviplata</option>
+        <option value="bre-b">Bre-B</option>
+        <option value="pse">PSE</option>
+        <option value="otro">Otro</option>
+      </select>
+    </div>
+  </div>
+  <div class="fg" id="fg-comprobante" style="display:none">
+    <label>Comprobante de pago (foto)</label>
+    <div class="upzone" onclick="document.getElementById('file-comprobante').click()">
+      <div style="font-size:22px">Comp</div>
+      <div class="uzlbl">Toca para subir el comprobante</div>
+      <input type="file" id="file-comprobante" accept="image/*" onchange="subirComprobante(this)">
+    </div>
+    <img id="comp-preview-img" class="comp-preview" style="display:none">
+  </div>
+  <div class="fg"><label>Nota</label><input type="text" id="ab-nota" placeholder="Observacion opcional"></div>
+  <div class="mfooter">
+    <button class="btn btn-o" onclick="cerrarModal('modal-abono')">Cancelar</button>
+    <button class="btn btn-p" onclick="guardarAbono()">Registrar pago</button>
+  </div>
+</div>
+</div>
+
+<!-- MODAL CONTRATO -->
+<div class="ov" id="modal-contrato">
+<div class="modal wide">
+  <div class="mtitle">Contrato de prestamo</div>
+  <div class="alert ai">Puedes imprimir este contrato o compartirlo como PDF desde tu dispositivo.</div>
+  <div id="contrato-body" style="background:#fafafa;border:1px solid var(--border);border-radius:10px;padding:1.5rem 2rem;margin-bottom:1rem"></div>
+  <div class="mfooter">
+    <button class="btn btn-o" onclick="cerrarModal('modal-contrato')">Cerrar</button>
+    <button class="btn btn-p" onclick="imprimirContrato()">Imprimir / Compartir</button>
+  </div>
+</div>
+</div>
+
+<!-- MODAL UNIFICACIÓN -->
+<div class="ov" id="modal-unificacion">
+<div class="modal wide">
+  <div class="mtitle">Unificar préstamos</div>
+  <div class="alert aw">
+    Este cliente ya tiene 2 préstamos activos. Puedes consolidarlos en uno solo con nuevas condiciones.
+  </div>
+
+  <!-- Resumen de los 2 préstamos a unificar -->
+  <div id="unif-prestamos-resumen"></div>
+
+  <!-- Nuevo capital resultante -->
+  <div style="background:var(--blue-bg);border:1px solid #b8d4f5;border-radius:10px;padding:1rem;margin-bottom:1.2rem">
+    <div style="font-size:11px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Nuevo capital unificado</div>
+    <div style="font-size:26px;font-weight:700;color:var(--blue)" id="unif-nuevo-capital">$0</div>
+    <div style="font-size:12px;color:var(--text2);margin-top:2px">Suma de los saldos actuales de ambos préstamos</div>
+  </div>
+
+  <!-- Nuevas condiciones -->
+  <div class="sdiv">Condiciones del préstamo unificado</div>
+  <div class="frow">
+    <div class="fg"><label>Abono fijo al capital por cuota ($) *</label><input type="number" id="unif-cuota-cap" placeholder="100000" oninput="calcUnifPreview()"></div>
+    <div class="fg"><label>Tasa de interés por cuota (%)</label><input type="number" id="unif-tasa" value="10" min="0" max="100" oninput="calcUnifPreview()"></div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label>Frecuencia de pago</label>
+      <select id="unif-freq" onchange="calcUnifPreview()">
+        <option value="30">Mensual (30 días)</option>
+        <option value="15">Quincenal (15 días)</option>
+        <option value="7">Semanal (7 días)</option>
+      </select>
+    </div>
+    <div class="fg"><label>Fecha primera cuota *</label><input type="date" id="unif-fecha" oninput="calcUnifPreview()"></div>
+  </div>
+  <div class="fg"><label>Observaciones</label><input type="text" id="unif-obs" placeholder="Motivo de la unificación..."></div>
+
+  <!-- Preview del nuevo cronograma -->
+  <div id="unif-preview" style="display:none"></div>
+
+  <div class="mfooter">
+    <button class="btn btn-o" onclick="cerrarModal('modal-unificacion')">Cancelar</button>
+    <button class="btn btn-p" onclick="confirmarUnificacion()">Confirmar unificación</button>
+  </div>
+</div>
+</div>
+
+<!-- MODAL ESTADO DE CUENTA -->
+<div class="ov" id="modal-estado-cuenta">
+<div class="modal wide">
+  <div class="mtitle">Estado de cuenta</div>
+  <div class="alert ai" style="font-size:12px">Puedes imprimir este estado de cuenta o compartirlo como PDF desde tu dispositivo.</div>
+  <div id="estado-cuenta-body" style="background:#fafafa;border:1px solid var(--border);border-radius:10px;padding:1.5rem 2rem;margin-bottom:1rem"></div>
+  <div class="mfooter">
+    <button class="btn btn-o" onclick="cerrarModal('modal-estado-cuenta')">Cerrar</button>
+    <button class="btn btn-p" onclick="imprimirEstadoCuenta()">Imprimir / Compartir</button>
+  </div>
+</div>
+</div>
+
+<!-- MODAL CONFIRM -->
+<div class="ov" id="modal-confirm">
+<div class="modal" style="max-width:370px">
+  <div class="mtitle" id="conf-title">Confirmar?</div>
+  <p id="conf-msg" style="color:var(--text2);font-size:14px;margin-bottom:1.3rem"></p>
+  <div class="mfooter">
+    <button class="btn btn-o" onclick="cerrarModal('modal-confirm')">Cancelar</button>
+    <button class="btn btn-r" id="conf-ok">Confirmar</button>
+  </div>
+</div>
+</div>
+
+<!-- SDKs -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script>
+// ─── CREDENCIALES DE ACCESO (puedes cambiarlas aquí) ─────────────────────────
+var APP_USER = 'admin';
+var APP_PASS = 'credi2024';
+
+function doLogout() {
+  confirm2('Cerrar sesion', 'Seras devuelto a la pantalla de login.', function() {
+    sessionStorage.removeItem('cc_auth');
+    location.reload();
+  });
+}
+
+function doLogin() {
+  var u = document.getElementById('login-user').value.trim();
+  var p = document.getElementById('login-pass').value;
+  if (u === APP_USER && p === APP_PASS) {
+    sessionStorage.setItem('cc_auth', '1');
+    document.getElementById('login-overlay').style.display = 'none';
+    initDB();
+  } else {
+    document.getElementById('login-err').style.display = 'block';
+    document.getElementById('login-pass').value = '';
+    document.getElementById('login-pass').focus();
+  }
+}
+
+// Comprobar si ya hay sesión activa
+(function() {
+  if (sessionStorage.getItem('cc_auth') === '1') {
+    document.getElementById('login-overlay').style.display = 'none';
+    // initDB se llama al final del script, ok
+  }
+})();
+
+// ─── CONFIGURACIÓN SUPABASE ───────────────────────────────────────────────────
+var SUPA_URL = 'https://jyhjhfntlmcxqzourxtq.supabase.co';
+var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5aGpoZm50bG1jeHF6b3VyeHRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2MTg0MDksImV4cCI6MjA5NzE5NDQwOX0.R1EXPa-vbzRV68lwgbRmoPElYmlDIEC-ln2xzc7EYQM';
+var supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// ─── CACHÉ LOCAL (se carga desde Supabase al inicio) ─────────────────────────
+var DB = { clientes: [], prestamos: [], abonos: [] };
+
+// ─── CARGA INICIAL ────────────────────────────────────────────────────────────
+async function initDB() {
+  try {
+    var r1 = await supa.from('clientes').select('*').order('nombre');
+    var r2 = await supa.from('prestamos').select('*').order('creado_en', { ascending: false });
+    var r3 = await supa.from('pagos').select('*').order('creado_en');
+
+    if (r1.error) throw r1.error;
+    if (r2.error) throw r2.error;
+    if (r3.error) throw r3.error;
+
+    // Mapear clientes de Supabase al formato interno
+    DB.clientes = (r1.data || []).map(function(c) {
+      return {
+        id: c.id,
+        nombre: c.nombre,
+        cedula: c.cedula || '',
+        tel: c.telefono || '',
+        ciudad: c.ciudad || '',
+        ref: c.referido_por || 'N/A',
+        notas: c.notas || '',
+        diaPago: c.dia_pago || '30',
+        diaCustom: c.dia_custom || '',
+        metodoPago: c.metodo_pago || 'efectivo',
+        cuenta: c.numero_cuenta || '',
+        docs: c.docs || { cedula: [], letra: [] },
+        creado: c.creado_en
+      };
+    });
+
+    // Mapear préstamos
+    DB.prestamos = (r2.data || []).map(function(p) {
+      return {
+        id: p.id,
+        clienteId: p.cliente_id,
+        capital: parseFloat(p.capital_inicial),
+        cuotaCapital: parseFloat(p.cuota_capital),
+        tasa: parseFloat(p.tasa_interes),
+        fechaInicio: p.fecha_primera_cuota,
+        frecDias: parseInt(p.frecuencia_dias),
+        estado: p.estado,
+        obs: p.observaciones || '',
+        creado: p.creado_en
+      };
+    });
+
+    // Mapear pagos (abonos)
+    DB.abonos = (r3.data || []).map(function(a) {
+      return {
+        id: a.id,
+        pid: a.prestamo_id,
+        cuota: a.numero_cuota,
+        interes: parseFloat(a.interes_pagado || 0),
+        capital: parseFloat(a.capital_pagado || 0),
+        fecha: a.fecha_pago,
+        metodo: a.metodo_pago || 'efectivo',
+        comprobante: a.comprobante_url || null,
+        nota: a.nota || '',
+        completo: a.es_completo || false,
+        creado: a.creado_en
+      };
+    });
+
+    document.getElementById('loading-overlay').style.display = 'none';
+    renderDashboard();
+
+  } catch (err) {
+    document.getElementById('loading-overlay').innerHTML =
+      '<div style="text-align:center;color:#9b2335">' +
+      '<div style="font-size:24px;margin-bottom:8px">Error de conexion</div>' +
+      '<div style="font-size:14px;color:#6b6760">' + (err.message || 'No se pudo conectar con Supabase') + '</div>' +
+      '<button onclick="location.reload()" style="margin-top:16px;padding:8px 20px;background:#3d5a80;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px">Reintentar</button>' +
+      '</div>';
+  }
+}
+
+function showToast(msg) {
+  var t = document.getElementById('saving-toast');
+  t.textContent = msg || 'Guardando...';
+  t.style.display = 'block';
+  setTimeout(function() { t.style.display = 'none'; }, 2000);
+}
+
+// ─── NAVEGACIÓN ───────────────────────────────────────────────────────────────
+function showPage(p) {
+  document.querySelectorAll('.page').forEach(function(e) { e.classList.remove('on'); });
+  document.querySelectorAll('.nb').forEach(function(e) { e.classList.remove('on'); });
+  document.getElementById('page-' + p).classList.add('on');
+  document.querySelectorAll('.nb').forEach(function(e) {
+    if (e.textContent.trim().toLowerCase().startsWith(p.slice(0, 4))) e.classList.add('on');
+  });
+  if (p === 'dashboard') renderDashboard();
+  if (p === 'clientes') renderClientes();
+  if (p === 'reportes') renderReportes();
+  if (p === 'prestamos') {
+    document.getElementById('lista-prest-view').style.display = '';
+    document.getElementById('detalle-prest-view').style.display = 'none';
+    renderPrestamos();
+  }
+  if (p === 'cobros') renderCobros();
+}
+
+// ─── LÓGICA FINANCIERA (sin cambios) ─────────────────────────────────────────
+function genTabla(capital, cuotaCap, tasa, fechaInicio, frecDias) {
+  var t = [], freq = parseInt(frecDias) || 30, saldo = capital, f = new Date(fechaInicio), n = 1;
+  while (saldo > 0.5 && n <= 500) {
+    var int = Math.round(saldo * tasa / 100), cap = Math.min(cuotaCap, saldo);
+    t.push({ n: n, fecha: f.toISOString().split('T')[0], saldoAnt: saldo, interes: int, capital: cap, total: int + cap, saldoRest: saldo - cap });
+    saldo -= cap; var nf = new Date(f); nf.setDate(nf.getDate() + freq); f = nf; n++;
+  }
+  return t;
+}
+
+function getSaldo(p) {
+  var cap = DB.abonos.filter(function(a) { return a.pid === p.id; })
+              .reduce(function(s, a) { return s + (a.capital || 0); }, 0);
+  return Math.max(0, p.capital - cap);
+}
+
+function genTablaDinamica(p) {
+  var freq = parseInt(p.frecDias) || 30, t = [], saldo = p.capital, f = new Date(p.fechaInicio), n = 1;
+  var absCap = {};
+  DB.abonos.filter(function(a) { return a.pid === p.id && a.cuota; }).forEach(function(a) {
+    absCap[a.cuota] = (absCap[a.cuota] || 0) + (a.capital || 0);
+  });
+  while (saldo > 0.5 && n <= 500) {
+    var int = Math.round(saldo * (p.tasa || 10) / 100);
+    var capPagado = absCap[n] || 0;
+    var capEsp = Math.min(p.cuotaCapital, saldo);
+    t.push({ n: n, fecha: f.toISOString().split('T')[0], saldoAnt: saldo, interes: int, capital: capEsp, total: int + capEsp, saldoRest: saldo - capEsp });
+    if (capPagado > 0) saldo -= capPagado; else saldo -= capEsp;
+    var nf = new Date(f); nf.setDate(nf.getDate() + freq); f = nf; n++;
+  }
+  return t;
+}
+
+function cuotaPagada(pid, n) {
+  return DB.abonos.some(function(a) { return a.pid === pid && a.cuota === n && a.completo; });
+}
+
+function getEst(p, hoyD) {
+  if (p.estado === 'pagado') return 'pagado';
+  if (p.estado === 'unificado') return 'unificado';
+  var hoy = (hoyD || new Date()).toISOString().split('T')[0];
+  var t = genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias);
+  return t.some(function(c) { return !cuotaPagada(p.id, c.n) && c.fecha < hoy; }) ? 'atrasado' : 'activo';
+}
+
+// ─── DASHBOARD ────────────────────────────────────────────────────────────────
+function renderDashboard() {
+  var hoy = new Date();
+  document.getElementById('fecha-hoy').textContent = hoy.toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  var act = DB.prestamos.filter(function(p) { return p.estado !== 'pagado' && p.estado !== 'unificado'; });
+  var cartera = 0, cobHoy = 0, atras = 0;
+  var h = hoy.toISOString().split('T')[0];
+  act.forEach(function(p) {
+    cartera += getSaldo(p);
+    if (getEst(p, hoy) === 'atrasado') atras++;
+    genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias).forEach(function(c) {
+      if (!cuotaPagada(p.id, c.n) && c.fecha === h) cobHoy++;
+    });
+  });
+  document.getElementById('stats-grid').innerHTML =
+    '<div class="sc b"><div class="sc-lbl">Cartera total</div><div class="sc-val money">$' + fmt(cartera) + '</div><div class="sc-sub">' + act.length + ' activo(s)</div></div>' +
+    '<div class="sc g"><div class="sc-lbl">Cobros hoy</div><div class="sc-val">' + cobHoy + '</div><div class="sc-sub">cuotas programadas</div></div>' +
+    '<div class="sc r"><div class="sc-lbl">Atrasados</div><div class="sc-val">' + atras + '</div><div class="sc-sub">prestamos en mora</div></div>' +
+    '<div class="sc"><div class="sc-lbl">Clientes</div><div class="sc-val">' + DB.clientes.length + '</div><div class="sc-sub">registrados</div></div>';
+
+  var fin = new Date(hoy); fin.setDate(fin.getDate() + 7);
+  var cols = [];
+  DB.prestamos.filter(function(p) { return p.estado !== 'pagado' && p.estado !== 'unificado'; }).forEach(function(p) {
+    var cli = DB.clientes.find(function(c) { return c.id === p.clienteId; });
+    genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias).forEach(function(c) {
+      var fd = new Date(c.fecha + 'T12:00:00');
+      if (fd >= hoy && fd <= fin && !cuotaPagada(p.id, c.n))
+        cols.push(Object.assign({}, c, { pid: p.id, cli: cli ? cli.nombre : '?', esHoy: c.fecha === h }));
+    });
+  });
+  cols.sort(function(a, b) { return a.fecha.localeCompare(b.fecha); });
+  var w = document.getElementById('cobros-semana-table');
+  if (!cols.length) { w.innerHTML = '<div class="empty"><div class="ico">Sin cobros esta semana</div></div>'; return; }
+  var rows = cols.map(function(c) {
+    return '<tr><td><strong>' + c.cli + '</strong></td>' +
+      '<td>' + (c.esHoy ? '<span class="bdg ba">HOY</span> ' : '') + ffecha(c.fecha) + '</td>' +
+      '<td>#' + c.n + '</td>' +
+      '<td class="tr money" style="color:var(--red)">$' + fmt(c.interes) + '</td>' +
+      '<td class="tr money">$' + fmt(c.capital) + '</td>' +
+      '<td class="tr money"><strong>$' + fmt(c.total) + '</strong></td>' +
+      '<td><button class="btn btn-g bsm" onclick="abrirAbono(\'' + c.pid + '\',' + c.n + ')">Cobrar</button></td></tr>';
+  }).join('');
+  w.innerHTML = '<table><thead><tr><th>Cliente</th><th>Fecha</th><th>Cuota</th><th class="tr">Interes</th><th class="tr">Capital</th><th class="tr">Total</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+// ─── CLIENTES ─────────────────────────────────────────────────────────────────
+var editCliId = null, docsTemp = { cedula: [], letra: [] }, filtroDia = '';
+
+function filtrarDia(btn, dia) {
+  filtroDia = dia;
+  document.querySelectorAll('.on-filter').forEach(function(b) { b.classList.remove('on-filter'); });
+  btn.classList.add('on-filter');
+  renderClientes();
+}
+function toggleDiaCustom() {
+  var d = document.getElementById('cli-dia-pago').value;
+  document.getElementById('fg-dia-custom').style.display = (d === 'otro' ? 'block' : 'none');
+}
+function toggleCuenta() {
+  var m = document.getElementById('cli-metodo-pago').value;
+  document.getElementById('fg-cuenta').style.display = (m !== 'efectivo' ? 'block' : 'none');
+}
+
+function abrirModalCliente(id) {
+  editCliId = id || null;
+  docsTemp = { cedula: [], letra: [] };
+  document.getElementById('modal-cli-title').textContent = id ? 'Editar cliente' : 'Nuevo cliente';
+  ['cli-nombre', 'cli-cedula', 'cli-tel', 'cli-ciudad', 'cli-ref', 'cli-notas', 'cli-cuenta'].forEach(function(f) {
+    document.getElementById(f).value = '';
+  });
+  document.getElementById('cli-dia-pago').value = '30';
+  document.getElementById('cli-metodo-pago').value = 'efectivo';
+  document.getElementById('docs-cedula').innerHTML = '';
+  document.getElementById('docs-letra').innerHTML = '';
+  toggleCuenta(); toggleDiaCustom();
+  if (id) {
+    var c = DB.clientes.find(function(x) { return x.id === id; });
+    if (!c) return;
+    document.getElementById('cli-nombre').value = c.nombre || '';
+    document.getElementById('cli-cedula').value = c.cedula || '';
+    document.getElementById('cli-tel').value = c.tel || '';
+    document.getElementById('cli-ciudad').value = c.ciudad || '';
+    document.getElementById('cli-ref').value = c.ref || 'N/A';
+    document.getElementById('cli-notas').value = c.notas || '';
+    document.getElementById('cli-dia-pago').value = c.diaPago || '30';
+    document.getElementById('cli-metodo-pago').value = c.metodoPago || 'efectivo';
+    document.getElementById('cli-cuenta').value = c.cuenta || '';
+    docsTemp = JSON.parse(JSON.stringify(c.docs || { cedula: [], letra: [] }));
+    renderDocList('cedula'); renderDocList('letra');
+    toggleCuenta(); toggleDiaCustom();
+    if (c.diaPago === 'otro') document.getElementById('cli-dia-custom').value = c.diaCustom || '';
+  }
+  document.getElementById('modal-cliente').classList.add('on');
+}
+
+function subirDoc(tipo, input) {
+  var file = input.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    docsTemp[tipo] = docsTemp[tipo] || [];
+    docsTemp[tipo].push({ nombre: file.name, data: e.target.result, tipo: file.type });
+    renderDocList(tipo);
+  };
+  reader.readAsDataURL(file);
+}
+function renderDocList(tipo) {
+  var w = document.getElementById('docs-' + tipo); if (!w) return;
+  w.innerHTML = (docsTemp[tipo] || []).map(function(d, i) {
+    return '<div class="docchip">' + d.nombre + ' <button onclick="elimDoc(\'' + tipo + '\',' + i + ')">x</button></div>';
+  }).join('');
+}
+function elimDoc(tipo, i) { docsTemp[tipo].splice(i, 1); renderDocList(tipo); }
+
+async function guardarCliente() {
+  var nombre = document.getElementById('cli-nombre').value.trim();
+  if (!nombre) { alert('El nombre es obligatorio'); return; }
+  var diaPago = document.getElementById('cli-dia-pago').value;
+  var diaCustom = diaPago === 'otro' ? document.getElementById('cli-dia-custom').value : '';
+
+  var supaObj = {
+    nombre: nombre,
+    cedula: document.getElementById('cli-cedula').value.trim() || null,
+    telefono: document.getElementById('cli-tel').value.trim() || null,
+    ciudad: document.getElementById('cli-ciudad').value.trim() || null,
+    referido_por: document.getElementById('cli-ref').value.trim() || 'N/A',
+    notas: document.getElementById('cli-notas').value.trim() || null,
+    dia_pago: diaPago,
+    dia_custom: diaCustom || null,
+    metodo_pago: document.getElementById('cli-metodo-pago').value,
+    numero_cuenta: document.getElementById('cli-cuenta').value.trim() || null,
+    docs: JSON.parse(JSON.stringify(docsTemp))
+  };
+
+  var localObj = {
+    nombre: supaObj.nombre,
+    cedula: supaObj.cedula || '',
+    tel: supaObj.telefono || '',
+    ciudad: supaObj.ciudad || '',
+    ref: supaObj.referido_por,
+    notas: supaObj.notas || '',
+    diaPago: diaPago,
+    diaCustom: diaCustom,
+    metodoPago: supaObj.metodo_pago,
+    cuenta: supaObj.numero_cuenta || '',
+    docs: supaObj.docs
+  };
+
+  showToast('Guardando cliente...');
+  if (editCliId) {
+    var r = await supa.from('clientes').update(supaObj).eq('id', editCliId);
+    if (r.error) { alert('Error al guardar: ' + r.error.message); return; }
+    var idx = DB.clientes.findIndex(function(x) { return x.id === editCliId; });
+    DB.clientes[idx] = Object.assign({ id: editCliId, creado: DB.clientes[idx].creado }, localObj);
+  } else {
+    var r2 = await supa.from('clientes').insert(supaObj).select().single();
+    if (r2.error) { alert('Error al guardar: ' + r2.error.message); return; }
+    DB.clientes.push(Object.assign({ id: r2.data.id, creado: r2.data.creado_en }, localObj));
+  }
+  showToast('Cliente guardado ✓');
+  cerrarModal('modal-cliente');
+  renderClientes();
+}
+
+function eliminarCliente(cid) {
+  var c = DB.clientes.find(function(x) { return x.id === cid; });
+  if (!c) return;
+  var prestamosCliente = DB.prestamos.filter(function(p) { return p.clienteId === cid && (p.estado === 'activo' || p.estado === 'atrasado'); });
+  if (prestamosCliente.length > 0) {
+    alert('No se puede eliminar: este cliente tiene ' + prestamosCliente.length + ' préstamo(s) activo(s). Liquida los préstamos primero.');
+    return;
+  }
+  confirm2('Eliminar cliente', '¿Eliminar a ' + c.nombre + '? Esta acción no se puede deshacer.', async function() {
+    showToast('Eliminando cliente...');
+    var r = await supa.from('clientes').delete().eq('id', cid);
+    if (r.error) { alert('Error al eliminar: ' + r.error.message); return; }
+    DB.clientes = DB.clientes.filter(function(x) { return x.id !== cid; });
+    showToast('Cliente eliminado');
+    renderClientes();
+  });
+}
+
+function renderClientes() {
+  var q = (document.getElementById('buscar-cliente').value || '').toLowerCase();
+  var lista = DB.clientes.slice().sort(function(a, b) { return a.nombre.localeCompare(b.nombre, 'es'); });
+  if (q) lista = lista.filter(function(c) { return (c.nombre + c.cedula + c.tel + (c.notas || '')).toLowerCase().includes(q); });
+  if (filtroDia) lista = lista.filter(function(c) { return c.diaPago === filtroDia; });
+  var w = document.getElementById('tabla-clientes');
+  if (!lista.length) {
+    w.innerHTML = '<div class="empty"><div class="ico">🔍</div><p>No hay clientes que coincidan con la búsqueda</p><button class="btn btn-p" onclick="abrirModalCliente()">+ Agregar</button></div>';
+    return;
+  }
+  var metI = { efectivo: 'Efectivo', nequi: 'Nequi', bancolombia: 'Bancolombia', daviplata: 'Daviplata', 'bre-b': 'Bre-B', pse: 'PSE', otro: 'Otro' };
+  var rows = lista.map(function(c) {
+    var np = DB.prestamos.filter(function(p) { return p.clienteId === c.id && p.estado !== 'unificado'; }).length;
+    var npActivos = DB.prestamos.filter(function(p) { return p.clienteId === c.id && (p.estado === 'activo' || p.estado === 'atrasado'); }).length;
+    var dpCls = { 5: 'd5', 15: 'd15', 30: 'd30' }[c.diaPago] || 'dother';
+    var dpLabel = c.diaPago === 'otro' ? 'Dia ' + c.diaCustom : 'Dia ' + c.diaPago;
+    var ndocs = ((c.docs && c.docs.cedula) ? c.docs.cedula.length : 0) + ((c.docs && c.docs.letra) ? c.docs.letra.length : 0);
+    var docBtn = ndocs > 0 ? '<button class="btn btn-o bsm" onclick="verDocs(\'' + c.id + '\')">Docs (' + ndocs + ')</button>' : '';
+    return '<tr>' +
+      '<td><strong>' + c.nombre + '</strong>' + (c.notas ? '<br><span style="font-size:11px;color:var(--text3)">' + c.notas + '</span>' : '') + '</td>' +
+      '<td>' + (c.cedula || '') + '</td>' +
+      '<td>' + (c.tel ? '<a href="tel:' + c.tel + '" style="color:var(--accent)">' + c.tel + '</a>' : '') + '</td>' +
+      '<td style="font-size:12px;color:var(--text2)">' + (c.ref || 'N/A') + '</td>' +
+      '<td><span class="dchip ' + dpCls + '">' + dpLabel + '</span></td>' +
+      '<td style="font-size:13px">' + (metI[c.metodoPago] || c.metodoPago || '') + (c.cuenta ? ' · ' + c.cuenta : '') + '</td>' +
+      '<td>' + (npActivos > 0 ? '<span class="bdg bb">' + npActivos + ' activo(s)</span>' : '<span class="bdg bgr">' + (np > 0 ? np + ' pagado(s)' : '0') + '</span>') + '</td>' +
+      '<td style="display:flex;gap:5px;flex-wrap:wrap">' +
+        '<button class="btn btn-o bsm" onclick="abrirModalCliente(\'' + c.id + '\')">Editar</button>' +
+        '<button class="btn btn-p bsm" onclick="abrirModalPrestamoCliente(\'' + c.id + '\')">+ Préstamo</button>' +
+        '<button class="btn btn-o bsm" onclick="abrirEstadoCuenta(\'' + c.id + '\')" style="border-color:var(--accent);color:var(--accent)">Estado de cuenta</button>' +
+        (npActivos >= 2
+          ? '<button class="btn btn-a bsm" onclick="abrirUnificacion(\'' + c.id + '\')">Unificar</button>' : '') +
+        docBtn +
+        '<button class="btn btn-r bsm" onclick="eliminarCliente(\'' + c.id + '\')" title="Eliminar cliente">🗑</button>' +
+      '</td></tr>';
+  }).join('');
+  w.innerHTML = '<table><thead><tr><th>Nombre</th><th>Cedula</th><th>Telefono</th><th>Referido por</th><th>Dia pago</th><th>Metodo pago</th><th>Prestamos</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+function verDocs(cid) {
+  var c = DB.clientes.find(function(x) { return x.id === cid; });
+  var docs = [].concat(c.docs && c.docs.cedula ? c.docs.cedula : []).concat(c.docs && c.docs.letra ? c.docs.letra : []);
+  docs.forEach(function(d) { var a = document.createElement('a'); a.href = d.data; a.download = d.nombre; a.click(); });
+}
+
+// ─── PRÉSTAMOS ────────────────────────────────────────────────────────────────
+function abrirModalPrestamo() {
+  if (!DB.clientes.length) { alert('Primero agrega un cliente.'); return; }
+  var sel = document.getElementById('pres-cliente');
+  sel.innerHTML = DB.clientes.slice().sort(function(a, b) { return a.nombre.localeCompare(b.nombre, 'es'); })
+    .map(function(c) { return '<option value="' + c.id + '">' + c.nombre + '</option>'; }).join('');
+  var d = new Date(); d.setDate(d.getDate() + 30);
+  document.getElementById('pres-fecha').value = d.toISOString().split('T')[0];
+  ['pres-capital', 'pres-cuota-cap', 'pres-obs'].forEach(function(id) { document.getElementById(id).value = ''; });
+  document.getElementById('pres-tasa').value = '10';
+  document.getElementById('vista-previa').style.display = 'none';
+  autoFillDiaPago();
+  document.getElementById('modal-prestamo').classList.add('on');
+}
+
+function abrirModalPrestamoCliente(cid) {
+  showPage('prestamos');
+  setTimeout(function() {
+    abrirModalPrestamo();
+    document.getElementById('pres-cliente').value = cid;
+    autoFillDiaPago();
+  }, 80);
+}
+
+function autoFillDiaPago() {
+  var cid = document.getElementById('pres-cliente').value;
+  var c = DB.clientes.find(function(x) { return x.id === cid; }); if (!c) return;
+  var dia = c.diaPago === 'otro' ? parseInt(c.diaCustom || 15) : parseInt(c.diaPago || 30);
+  var hoy = new Date(), f = new Date(hoy.getFullYear(), hoy.getMonth() + 1, dia);
+  if (f <= hoy) f = new Date(hoy.getFullYear(), hoy.getMonth() + 2, dia);
+  document.getElementById('pres-fecha').value = f.toISOString().split('T')[0];
+  calcPreview();
+}
+
+function calcPreview() {
+  var cap = parseFloat(document.getElementById('pres-capital').value);
+  var cc = parseFloat(document.getElementById('pres-cuota-cap').value);
+  var tasa = parseFloat(document.getElementById('pres-tasa').value) || 10;
+  var fecha = document.getElementById('pres-fecha').value;
+  var freq = parseInt(document.getElementById('pres-freq').value) || 30;
+  var vp = document.getElementById('vista-previa');
+  if (!cap || !cc || !fecha) { vp.style.display = 'none'; return; }
+  var tab = genTabla(cap, cc, tasa, fecha, freq);
+  var totInt = tab.reduce(function(s, c) { return s + c.interes; }, 0);
+  vp.style.display = 'block';
+  var rows = tab.slice(0, 10).map(function(c) {
+    return '<tr><td style="padding:4px 10px">' + c.n + '</td><td>' + ffecha(c.fecha) + '</td>' +
+      '<td style="color:var(--red)">$' + fmt(c.interes) + '</td><td>$' + fmt(c.capital) + '</td>' +
+      '<td><strong>$' + fmt(c.total) + '</strong></td><td>$' + fmt(c.saldoRest) + '</td></tr>';
+  }).join('');
+  var more = tab.length > 10 ? '<tr><td colspan="6" style="padding:4px 10px;text-align:center;color:var(--text3)">...' + (tab.length - 10) + ' cuotas mas</td></tr>' : '';
+  vp.innerHTML = '<div class="alert ai">' + tab.length + ' cuotas | 1a: $' + fmt(tab[0].total) + ' | Ultima: $' + fmt(tab[tab.length - 1].total) + ' | Total intereses: $' + fmt(totInt) + '</div>' +
+    '<div style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;font-size:12px"><table><tr style="background:var(--surface2)"><th style="padding:5px 10px;font-size:10px">#</th><th>Fecha</th><th>Interes</th><th>Capital</th><th>Total</th><th>Saldo</th></tr>' + rows + more + '</table></div>';
+}
+
+async function guardarPrestamo() {
+  var cid = document.getElementById('pres-cliente').value;
+  var capital = parseFloat(document.getElementById('pres-capital').value);
+  var cuotaCapital = parseFloat(document.getElementById('pres-cuota-cap').value);
+  var tasa = parseFloat(document.getElementById('pres-tasa').value) || 10;
+  var fechaInicio = document.getElementById('pres-fecha').value;
+  var frecDias = parseInt(document.getElementById('pres-freq').value) || 30;
+  var obs = document.getElementById('pres-obs').value.trim();
+  if (!cid || !capital || !cuotaCapital || !fechaInicio) { alert('Completa los campos requeridos'); return; }
+
+  // Verificar limite de 2 préstamos activos
+  var activos = DB.prestamos.filter(function(p) {
+    return p.clienteId === cid && (p.estado === 'activo' || p.estado === 'atrasado');
+  });
+  if (activos.length >= 2) {
+    cerrarModal('modal-prestamo');
+    setTimeout(function() { abrirUnificacion(cid); }, 200);
+    return;
+  }
+
+  showToast('Creando prestamo...');
+  var supaObj = {
+    cliente_id: cid,
+    capital_inicial: capital,
+    cuota_capital: cuotaCapital,
+    tasa_interes: tasa,
+    fecha_primera_cuota: fechaInicio,
+    frecuencia_dias: frecDias,
+    estado: 'activo',
+    observaciones: obs || null
+  };
+
+  var r = await supa.from('prestamos').insert(supaObj).select().single();
+  if (r.error) { alert('Error al guardar: ' + r.error.message); return; }
+
+  DB.prestamos.unshift({
+    id: r.data.id,
+    clienteId: cid,
+    capital: capital,
+    cuotaCapital: cuotaCapital,
+    tasa: tasa,
+    fechaInicio: fechaInicio,
+    frecDias: frecDias,
+    estado: 'activo',
+    obs: obs,
+    creado: r.data.creado_en
+  });
+
+  showToast('Prestamo creado ✓');
+  cerrarModal('modal-prestamo');
+  renderPrestamos();
+}
+
+function renderPrestamos() {
+  var q = (document.getElementById('buscar-prest').value || '').toLowerCase();
+  var filt = document.getElementById('filtro-est-p').value;
+  var hoy = new Date();
+  var lista = DB.prestamos.map(function(p) {
+    var cli = DB.clientes.find(function(c) { return c.id === p.clienteId; });
+    return Object.assign({}, p, { _cli: cli, _est: getEst(p, hoy), _saldo: getSaldo(p) });
+  });
+  if (q) lista = lista.filter(function(p) { return (p._cli ? p._cli.nombre : '').toLowerCase().includes(q); });
+  if (filt) lista = lista.filter(function(p) { return p._est === filt; });
+  lista.sort(function(a, b) { return b.creado.localeCompare(a.creado); });
+  var w = document.getElementById('tabla-prestamos');
+  if (!lista.length) {
+    w.innerHTML = '<div class="empty"><div class="ico">Sin prestamos</div><p>No hay prestamos registrados</p><button class="btn btn-p" onclick="abrirModalPrestamo()">+ Nuevo</button></div>';
+    return;
+  }
+  var estB = { activo: 'bdg bg', atrasado: 'bdg br', pagado: 'bdg bgr', unificado: 'bdg' };
+  var estL = { activo: 'Activo', atrasado: 'Atrasado', pagado: 'Pagado', unificado: 'Unificado' };
+  var rows = lista.map(function(p) {
+    var pct = Math.round((1 - p._saldo / p.capital) * 100);
+    var esUnif = p._est === 'unificado';
+    return '<tr' + (esUnif ? ' style="opacity:0.5"' : '') + '>' +
+      '<td><strong>' + (p._cli ? p._cli.nombre : '?') + '</strong></td>' +
+      '<td class="money">$' + fmt(p.capital) + '</td>' +
+      '<td class="money"><strong>$' + fmt(p._saldo) + '</strong></td>' +
+      '<td class="money">$' + fmt(p.cuotaCapital) + '</td>' +
+      '<td>' + ffecha(p.fechaInicio) + '</td>' +
+      '<td><span class="' + (estB[p._est] || 'bdg bgr') + '" style="' + (esUnif ? 'background:var(--purple-bg);color:var(--purple)' : '') + '">' + (estL[p._est] || p._est) + '</span></td>' +
+      '<td><div class="pb"><div class="pbf" style="width:' + pct + '%"></div></div><span style="font-size:11px;color:var(--text3)">' + pct + '%</span></td>' +
+      '<td style="display:flex;gap:5px">' +
+        (!esUnif ? '<button class="btn btn-o bsm" onclick="verDetalle(\'' + p.id + '\')">Ver</button>' : '') +
+        '<button class="btn btn-a bsm" onclick="abrirContrato(\'' + p.id + '\')">Contrato</button>' +
+      '</td></tr>';
+  }).join('');
+  w.innerHTML = '<table><thead><tr><th>Cliente</th><th>Capital</th><th>Saldo</th><th>Cuota cap.</th><th>Inicio</th><th>Estado</th><th>Progreso</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+// ─── DETALLE PRÉSTAMO ─────────────────────────────────────────────────────────
+var detPid = null;
+function verDetalle(id) {
+  detPid = id;
+  document.getElementById('lista-prest-view').style.display = 'none';
+  document.getElementById('detalle-prest-view').style.display = '';
+  renderDetalle(id);
+}
+
+function renderDetalle(id) {
+  var p = DB.prestamos.find(function(x) { return x.id === id; });
+  if (!p) return;
+  var cli = DB.clientes.find(function(c) { return c.id === p.clienteId; });
+  var hoy = new Date();
+  var tab = genTablaDinamica(p);
+  var saldo = getSaldo(p);
+  var pct = Math.round((1 - saldo / p.capital) * 100);
+  var abs = DB.abonos.filter(function(a) { return a.pid === id; }).sort(function(a, b) { return b.fecha.localeCompare(a.fecha); });
+  var totInt = tab.reduce(function(s, c) { return s + c.interes; }, 0);
+  var intRecib = abs.reduce(function(s, a) { return s + (a.interes || 0); }, 0);
+  var est = getEst(p, hoy);
+  var hoyStr = hoy.toISOString().split('T')[0];
+
+  var cuotasHtml = tab.map(function(c) {
+    var pg = cuotaPagada(p.id, c.n);
+    var vn = !pg && c.fecha < hoyStr;
+    var esH = c.fecha === hoyStr;
+    var ab = abs.find(function(a) { return a.cuota === c.n; });
+    var ncCls = pg ? 'background:var(--green-bg);color:var(--green)' : vn ? 'background:var(--red-bg);color:var(--red)' : '';
+    var accion = pg
+      ? ('<span class="bdg bg">Pagado</span>' + (ab && ab.nota ? '<br><span style="font-size:10px;color:var(--text3)">' + ab.nota + '</span>' : ''))
+      : (est !== 'pagado' ? '<button class="btn btn-g bsm" onclick="abrirAbono(\'' + p.id + '\',' + c.n + ')">Cobrar</button>' : '');
+    return '<div class="crow ' + (pg ? 'cpg' : vn ? 'cvn' : '') + '">' +
+      '<div><div class="nc" style="' + ncCls + '">' + c.n + '</div></div>' +
+      '<div style="font-size:12px">' + ffecha(c.fecha) + (esH ? '<br><span style="font-size:10px;color:var(--amber);font-weight:700">HOY</span>' : '') + '</div>' +
+      '<div class="money" style="font-size:12px">$' + fmt(c.saldoAnt) + '</div>' +
+      '<div class="money" style="color:var(--red);font-size:12px">$' + fmt(c.interes) + '</div>' +
+      '<div class="money" style="font-size:12px">$' + fmt(c.capital) + '</div>' +
+      '<div class="money" style="font-size:12px"><strong>$' + fmt(c.total) + '</strong></div>' +
+      '<div>' + accion + '</div></div>';
+  }).join('');
+
+  var histHtml = !abs.length
+    ? '<div class="empty"><p>Sin pagos registrados</p></div>'
+    : '<table><thead><tr><th>Fecha</th><th>Cuota</th><th>Interes recib.</th><th>Capital recib.</th><th>Total</th><th>Metodo</th><th>Nota</th><th></th></tr></thead><tbody>' +
+      abs.map(function(a) {
+        return '<tr>' +
+          '<td>' + ffecha(a.fecha) + '</td>' +
+          '<td>' + (a.cuota ? '#' + a.cuota : 'Libre') + '</td>' +
+          '<td class="money" style="color:var(--red)">$' + fmt(a.interes || 0) + '</td>' +
+          '<td class="money">$' + fmt(a.capital || 0) + '</td>' +
+          '<td class="money"><strong>$' + fmt((a.interes || 0) + (a.capital || 0)) + '</strong></td>' +
+          '<td>' + metLabel(a.metodo) + '</td>' +
+          '<td style="font-size:12px;color:var(--text3)">' + (a.nota || '') + '</td>' +
+          '<td><button class="btn btn-r bsm" onclick="elimAbono(\'' + a.id + '\',\'' + id + '\')">X</button></td>' +
+          '</tr>';
+      }).join('') +
+      '</tbody></table>';
+
+  var dv = document.getElementById('detalle-prest-view');
+  dv.innerHTML =
+    '<button class="btn btn-o bsm" onclick="volverLista()" style="margin-bottom:1rem">Volver</button>' +
+    '<div class="card"><div style="background:var(--text);color:#fff;border-radius:11px 11px 0 0;padding:1.4rem 1.8rem">' +
+    '<div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px">' +
+    '<div><h2 style="font-family:\'DM Serif Display\',serif;font-size:22px">' + (cli ? cli.nombre : '?') + '</h2>' +
+    '<div style="color:#aaa;font-size:13px">Prestamo | ' + (cli && cli.tel ? '| ' + cli.tel : '') + ' | Inicio ' + ffecha(p.fechaInicio) + '</div></div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+    '<button class="btn btn-a bsm" onclick="abrirContrato(\'' + p.id + '\')">Contrato</button>' +
+    (est !== 'pagado' ? '<button class="btn btn-g bsm" onclick="abrirAbono(\'' + p.id + '\',null)">+ Pago libre</button>' : '') +
+    '</div></div>' +
+    '<div style="display:flex;gap:10px;margin-top:1rem;flex-wrap:wrap">' +
+    kpi('Capital inicial', '$' + fmt(p.capital), '') +
+    kpi('Saldo actual', '$' + fmt(saldo), '#7fc9a8') +
+    kpi('Tasa / Cuota cap', p.tasa + '% / $' + fmt(p.cuotaCapital), '') +
+    kpi('Progreso', pct + '%', '') +
+    '</div></div>' +
+    '<div style="padding:1.4rem">' +
+    '<div class="tabs">' +
+    '<button class="tb on" onclick="swTab(this,\'td-cuotas\')">Tabla cuotas (' + tab.length + ')</button>' +
+    '<button class="tb" onclick="swTab(this,\'td-hist\')">Historial pagos (' + abs.length + ')</button>' +
+    '</div>' +
+    '<div id="td-cuotas" class="tc on">' +
+    '<div class="alert ai" style="font-size:12px">El abono a capital puede ser menor al valor fijo. El saldo baja en lo que se pague y el interes se ajusta automaticamente.</div>' +
+    '<div class="crow ch"><div>#</div><div>Fecha</div><div>Saldo ant.</div><div>Interes</div><div>Capital esp.</div><div>Total esp.</div><div>Accion</div></div>' +
+    cuotasHtml + '</div>' +
+    '<div id="td-hist" class="tc">' + histHtml +
+    '<div class="alert as mt2">Intereses recibidos: <strong>$' + fmt(intRecib) + '</strong> de $' + fmt(totInt) + ' esperados</div>' +
+    '</div></div></div>';
+}
+
+function kpi(l, v, c) {
+  return '<div style="background:rgba(255,255,255,.1);border-radius:8px;padding:7px 13px">' +
+    '<div style="font-size:10px;color:#aaa">' + l + '</div>' +
+    '<div style="font-size:18px;font-weight:600;' + (c ? 'color:' + c : '') + '">' + (v || '') + '</div></div>';
+}
+function swTab(btn, tid) {
+  var card = btn.closest('.card');
+  card.querySelectorAll('.tb').forEach(function(b) { b.classList.remove('on'); });
+  card.querySelectorAll('.tc').forEach(function(t) { t.classList.remove('on'); });
+  btn.classList.add('on'); document.getElementById(tid).classList.add('on');
+}
+function volverLista() {
+  document.getElementById('lista-prest-view').style.display = '';
+  document.getElementById('detalle-prest-view').style.display = 'none';
+}
+
+// ─── ABONOS / PAGOS ───────────────────────────────────────────────────────────
+var abPid = null, abCuota = null, comprobanteTmp = null;
+
+function abrirAbono(pid, ncuota) {
+  abPid = pid; abCuota = ncuota; comprobanteTmp = null;
+  var p = DB.prestamos.find(function(x) { return x.id === pid; });
+  var cli = DB.clientes.find(function(c) { return c.id === p.clienteId; });
+  document.getElementById('ab-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('ab-nota').value = '';
+  document.getElementById('ab-metodo').value = (cli && cli.metodoPago) || 'efectivo';
+  document.getElementById('comp-preview-img').style.display = 'none';
+  document.getElementById('file-comprobante').value = '';
+  toggleComprobante();
+  var info = '';
+  if (ncuota) {
+    var tab = genTablaDinamica(p), c = tab.find(function(x) { return x.n === ncuota; });
+    if (c) {
+      document.getElementById('ab-interes').value = c.interes;
+      document.getElementById('ab-capital').value = c.capital;
+      info = '<div style="background:var(--surface2);border-radius:10px;padding:.9rem;margin-bottom:1rem;font-size:13px">' +
+        '<div style="font-weight:600;color:var(--text2);margin-bottom:5px">CUOTA #' + ncuota + ' | ' + ffecha(c.fecha) + '</div>' +
+        '<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:var(--text2)">Interes esperado</span><strong style="color:var(--red)">$' + fmt(c.interes) + '</strong></div>' +
+        '<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:var(--text2)">Capital esperado</span><strong>$' + fmt(c.capital) + '</strong></div>' +
+        '<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:var(--text2)">Total esperado</span><strong>$' + fmt(c.total) + '</strong></div></div>' +
+        '<div class="alert aw" style="font-size:12px">Puedes ingresar un capital menor al esperado. El saldo del prestamo bajara en la cantidad que se pague.</div>';
+    }
+  } else {
+    document.getElementById('ab-interes').value = '';
+    document.getElementById('ab-capital').value = '';
+    info = '<div style="background:var(--surface2);border-radius:10px;padding:.9rem;margin-bottom:1rem;font-size:13px;color:var(--text2)">Pago libre. Ingresa los montos manualmente.</div>';
+  }
+  document.getElementById('abono-info').innerHTML = info;
+  document.getElementById('ab-saldo-aviso').style.display = 'none';
+  calcAbonoTotal();
+  document.getElementById('modal-abono').classList.add('on');
+}
+
+function toggleComprobante() {
+  var m = document.getElementById('ab-metodo').value;
+  var fg = document.getElementById('fg-comprobante');
+  fg.style.display = (m !== 'efectivo' ? 'block' : 'none');
+  var lbl = fg.querySelector('label');
+  if (lbl) lbl.textContent = 'Comprobante de pago (foto) *';
+}
+function subirComprobante(input) {
+  var file = input.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    comprobanteTmp = e.target.result;
+    var img = document.getElementById('comp-preview-img');
+    img.src = comprobanteTmp; img.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+function calcAbonoTotal() {
+  var i = parseFloat(document.getElementById('ab-interes').value) || 0;
+  var c = parseFloat(document.getElementById('ab-capital').value) || 0;
+  document.getElementById('ab-total').textContent = 'Total: $' + fmt(i + c);
+  if (abCuota) {
+    var p = DB.prestamos.find(function(x) { return x.id === abPid; });
+    var tab = genTablaDinamica(p), cu = tab.find(function(x) { return x.n === abCuota; });
+    if (cu && c > 0 && c < cu.capital) {
+      var av = document.getElementById('ab-saldo-aviso'); av.style.display = 'flex';
+      av.textContent = 'Abono de capital $' + fmt(c) + ' es menor al esperado $' + fmt(cu.capital) + '. El saldo bajara $' + fmt(c) + ' y las cuotas siguientes se recalculan automaticamente.';
+    } else document.getElementById('ab-saldo-aviso').style.display = 'none';
+  }
+}
+
+async function guardarAbono() {
+  var interes = parseFloat(document.getElementById('ab-interes').value) || 0;
+  var capital = parseFloat(document.getElementById('ab-capital').value) || 0;
+  if (!interes && !capital) { alert('Ingresa al menos un monto'); return; }
+  var fecha = document.getElementById('ab-fecha').value;
+  var metodo = document.getElementById('ab-metodo').value;
+  if (metodo !== 'efectivo' && !comprobanteTmp) {
+    alert('El comprobante de pago es obligatorio para pagos por ' + metLabel(metodo) + '.');
+    return;
+  }
+  var nota = document.getElementById('ab-nota').value.trim();
+  var p = DB.prestamos.find(function(x) { return x.id === abPid; });
+  var completo = false;
+  if (abCuota) {
+    var tab = genTablaDinamica(p), c = tab.find(function(x) { return x.n === abCuota; });
+    completo = c ? (interes >= c.interes && capital > 0) : true;
+  } else completo = true;
+
+  showToast('Registrando pago...');
+  var supaObj = {
+    prestamo_id: abPid,
+    numero_cuota: abCuota || null,
+    interes_pagado: interes,
+    capital_pagado: capital,
+    fecha_pago: fecha,
+    metodo_pago: metodo,
+    comprobante_url: comprobanteTmp || null,
+    nota: nota || null,
+    es_completo: completo
+  };
+
+  var r = await supa.from('pagos').insert(supaObj).select().single();
+  if (r.error) { alert('Error al guardar pago: ' + r.error.message); return; }
+
+  var nuevoAbono = {
+    id: r.data.id,
+    pid: abPid,
+    cuota: abCuota,
+    interes: interes,
+    capital: capital,
+    fecha: fecha,
+    metodo: metodo,
+    comprobante: comprobanteTmp || null,
+    nota: nota,
+    completo: completo,
+    creado: r.data.creado_en
+  };
+  DB.abonos.push(nuevoAbono);
+
+  // Verificar si el préstamo quedó totalmente pagado
+  var totalCap = DB.abonos.filter(function(a) { return a.pid === abPid; })
+    .reduce(function(s, a) { return s + (a.capital || 0); }, 0);
+  if (totalCap >= p.capital) {
+    await supa.from('prestamos').update({ estado: 'pagado', cerrado_en: new Date().toISOString() }).eq('id', abPid);
+    var idx = DB.prestamos.findIndex(function(x) { return x.id === abPid; });
+    DB.prestamos[idx].estado = 'pagado';
+  }
+
+  showToast('Pago registrado ✓');
+  cerrarModal('modal-abono');
+  if (detPid === abPid) renderDetalle(abPid); else renderDashboard();
+}
+
+async function elimAbono(aid, pid) {
+  confirm2('Eliminar pago?', 'Se borrara este registro de pago permanentemente.', async function() {
+    showToast('Eliminando...');
+    var r = await supa.from('pagos').delete().eq('id', aid);
+    if (r.error) { alert('Error: ' + r.error.message); return; }
+    DB.abonos = DB.abonos.filter(function(a) { return a.id !== aid; });
+    var idx = DB.prestamos.findIndex(function(x) { return x.id === pid; });
+    if (DB.prestamos[idx] && DB.prestamos[idx].estado === 'pagado') {
+      DB.prestamos[idx].estado = 'activo';
+      await supa.from('prestamos').update({ estado: 'activo', cerrado_en: null }).eq('id', pid);
+    }
+    showToast('Pago eliminado');
+    renderDetalle(pid);
+  });
+}
+
+// ─── COBROS ───────────────────────────────────────────────────────────────────
+function renderCobros() {
+  var hoy = new Date(), h = hoy.toISOString().split('T')[0];
+  var pendHoy = [], vencidas = [];
+  DB.prestamos.filter(function(p) { return p.estado !== 'pagado' && p.estado !== 'unificado'; }).forEach(function(p) {
+    var cli = DB.clientes.find(function(c) { return c.id === p.clienteId; });
+    genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias).forEach(function(c) {
+      if (cuotaPagada(p.id, c.n)) return;
+      var row = Object.assign({}, c, { pid: p.id, cli: cli ? cli.nombre : '?', tel: cli ? cli.tel || '' : '' });
+      if (c.fecha === h) pendHoy.push(row);
+      else if (c.fecha < h) vencidas.push(row);
+    });
+  });
+  var html = '';
+  if (pendHoy.length) {
+    var r = pendHoy.map(function(c) {
+      return '<tr><td><strong>' + c.cli + '</strong></td>' +
+        '<td>' + (c.tel ? '<a href="tel:' + c.tel + '" style="color:var(--accent)">' + c.tel + '</a>' : '') + '</td>' +
+        '<td>#' + c.n + '</td>' +
+        '<td class="tr money" style="color:var(--red)">$' + fmt(c.interes) + '</td>' +
+        '<td class="tr money">$' + fmt(c.capital) + '</td>' +
+        '<td class="tr money"><strong>$' + fmt(c.total) + '</strong></td>' +
+        '<td><button class="btn btn-g bsm" onclick="abrirAbono(\'' + c.pid + '\',' + c.n + ')">Cobrar</button></td></tr>';
+    }).join('');
+    html += '<div class="sh"><span class="st">Hoy (' + pendHoy.length + ')</span></div><div class="card"><table><thead><tr><th>Cliente</th><th>Tel</th><th>Cuota</th><th class="tr">Interes</th><th class="tr">Capital</th><th class="tr">Total</th><th></th></tr></thead><tbody>' + r + '</tbody></table></div>';
+  }
+  if (vencidas.length) {
+    var r2 = vencidas.map(function(c) {
+      return '<tr style="background:var(--red-bg)"><td><strong>' + c.cli + '</strong></td>' +
+        '<td style="color:var(--red)">' + ffecha(c.fecha) + '</td>' +
+        '<td>#' + c.n + '</td>' +
+        '<td class="tr money">$' + fmt(c.interes) + '</td>' +
+        '<td class="tr money">$' + fmt(c.capital) + '</td>' +
+        '<td class="tr money"><strong>$' + fmt(c.total) + '</strong></td>' +
+        '<td><button class="btn btn-g bsm" onclick="abrirAbono(\'' + c.pid + '\',' + c.n + ')">Cobrar</button></td></tr>';
+    }).join('');
+    html += '<div class="sh mt2"><span class="st" style="color:var(--red)">Cuotas vencidas (' + vencidas.length + ')</span></div><div class="card"><table><thead><tr><th>Cliente</th><th>Vencio</th><th>Cuota</th><th class="tr">Interes</th><th class="tr">Capital</th><th class="tr">Total</th><th></th></tr></thead><tbody>' + r2 + '</tbody></table></div>';
+  }
+  if (!html) html = '<div class="empty"><div class="ico">✓</div><p>Sin cobros pendientes!</p></div>';
+  document.getElementById('cobros-content').innerHTML = html;
+}
+
+// ─── CONTRATO ─────────────────────────────────────────────────────────────────
+function abrirContrato(pid) {
+  var p = DB.prestamos.find(function(x) { return x.id === pid; });
+  var cli = DB.clientes.find(function(c) { return c.id === p.clienteId; });
+  var tab = genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias);
+  var totInt = tab.reduce(function(s, c) { return s + c.interes; }, 0);
+  var hoyStr = new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
+  var freqTxt = { 7: 'semanal', 15: 'quincenal', 30: 'mensual' }[p.frecDias] || 'mensual';
+  var metodos = { efectivo: 'Efectivo en mano', nequi: 'Nequi', bancolombia: 'Transferencia Bancolombia', daviplata: 'Daviplata', 'bre-b': 'Bre-B', pse: 'PSE', otro: 'Otro medio acordado' };
+  var tabRows = tab.slice(0, 6).map(function(c) {
+    return '<tr style="border-bottom:1px solid #eee"><td style="padding:4px 8px">' + c.n + '</td><td>' + ffecha(c.fecha) + '</td>' +
+      '<td>$' + fmt(c.interes) + '</td><td>$' + fmt(c.capital) + '</td>' +
+      '<td><strong>$' + fmt(c.total) + '</strong></td><td>$' + fmt(c.saldoRest) + '</td></tr>';
+  }).join('');
+  var tabMore = tab.length > 6 ? '<tr><td colspan="6" style="padding:4px 8px;color:#999;font-size:11px">...' + (tab.length - 6) + ' cuotas mas hasta ' + ffecha(tab[tab.length - 1].fecha) + '</td></tr>' : '';
+  document.getElementById('contrato-body').innerHTML =
+    '<div class="contrato-body">' +
+    '<div style="text-align:center;margin-bottom:1.5rem"><div style="font-family:\'DM Serif Display\',serif;font-size:22px">CONTRATO DE PRESTAMO</div>' +
+    '<div style="font-size:12px;color:#555;margin-top:4px">' + hoyStr + '</div></div>' +
+    '<h3>PARTES DEL CONTRATO</h3>' +
+    '<p><strong>PRESTAMISTA:</strong> _____________________________, identificado(a) con cedula No. _____________________________</p>' +
+    '<p><strong>DEUDOR/A:</strong> ' + (cli ? cli.nombre : '_______________') + ', identificado(a) con cedula No. ' + (cli && cli.cedula ? cli.cedula : '_______________') + ', residente en ' + (cli && cli.ciudad ? cli.ciudad : '_______________') + ', tel. ' + (cli && cli.tel ? cli.tel : '_______________') + '.</p>' +
+    ((cli && cli.ref && cli.ref !== 'N/A') ? '<p><strong>REFERIDO POR:</strong> ' + cli.ref + '</p>' : '') +
+    '<h3>CONDICIONES DEL PRESTAMO</h3>' +
+    '<p>El PRESTAMISTA entrega en calidad de prestamo la suma de <strong>$' + fmt(p.capital) + ' pesos colombianos</strong>, que el DEUDOR recibe a entera satisfaccion, obligandose a devolverlos bajo las siguientes condiciones:</p>' +
+    '<p>Tasa de interes: <strong>' + p.tasa + '% ' + freqTxt + '</strong> sobre saldo insoluto.</p>' +
+    '<p>Abono fijo al capital: <strong>$' + fmt(p.cuotaCapital) + ' por cuota</strong>. Se acepta abono parcial al capital.</p>' +
+    '<p>Frecuencia de pago: <strong>' + freqTxt.charAt(0).toUpperCase() + freqTxt.slice(1) + '.</strong></p>' +
+    '<p>Fecha primera cuota: <strong>' + ffecha(p.fechaInicio) + '.</strong></p>' +
+    '<p>Numero de cuotas estimadas: <strong>' + tab.length + '</strong> | Total a pagar: <strong>$' + fmt(p.capital + totInt) + '</strong></p>' +
+    (p.obs ? '<p>Observaciones: ' + p.obs + '</p>' : '') +
+    '<h3>TABLA DE CUOTAS (primeras 6)</h3>' +
+    '<table style="width:100%;font-size:12px;border-collapse:collapse"><tr style="background:#eee"><th style="padding:4px 8px;text-align:left">#</th><th>Fecha</th><th>Interes</th><th>Capital</th><th>Total</th><th>Saldo</th></tr>' + tabRows + tabMore + '</table>' +
+    '<h3>METODO DE PAGO</h3>' +
+    '<p>Pago preferido: <strong>' + (metodos[cli && cli.metodoPago] || 'Efectivo') + '</strong>' + (cli && cli.cuenta ? ' - ' + cli.cuenta : '') + '.</p>' +
+    '<h3>MORA</h3>' +
+    '<p>En caso de no pago en la fecha acordada se causaran intereses de mora. El DEUDOR autoriza al PRESTAMISTA a realizar gestiones de cobro.</p>' +
+    '<h3>ACEPTACION</h3>' +
+    '<p>Las partes declaran conocer y aceptar este contrato, firmando en senial de conformidad.</p>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:3rem">' +
+    '<div class="firma-box"><div style="margin-bottom:.5rem">_______________________________</div><strong>EL PRESTAMISTA</strong><br>C.C. ___________________________</div>' +
+    '<div class="firma-box"><div style="margin-bottom:.5rem">_______________________________</div><strong>' + (cli ? cli.nombre : 'EL DEUDOR') + '</strong><br>C.C. ' + (cli && cli.cedula ? cli.cedula : '_______________') + '</div>' +
+    '</div></div>';
+  document.getElementById('modal-contrato').classList.add('on');
+}
+
+function imprimirContrato() {
+  var c = document.getElementById('contrato-body').innerHTML;
+  var win = window.open('', '_blank');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Contrato</title><style>body{font-family:Georgia,serif;max-width:700px;margin:2rem auto;font-size:13px;line-height:1.7;color:#222}h3{font-size:14px;margin:1rem 0 .3rem;font-weight:700}p{margin-bottom:.4rem}table{width:100%;border-collapse:collapse}.firma-box{border-top:1px solid #999;padding-top:.5rem;text-align:center;font-size:12px}@media print{@page{margin:2cm}}</style></head><body>' + c + '<script>window.print();<\/script></body></html>');
+  win.document.close();
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+function cerrarModal(id) { document.getElementById(id).classList.remove('on'); }
+function confirm2(title, msg, cb) {
+  document.getElementById('conf-title').textContent = title;
+  document.getElementById('conf-msg').textContent = msg;
+  var btn = document.getElementById('conf-ok');
+  btn.onclick = function() { cb(); cerrarModal('modal-confirm'); };
+  document.getElementById('modal-confirm').classList.add('on');
+}
+function fmt(n) { return Math.round(n).toLocaleString('es-CO'); }
+function ffecha(s) {
+  if (!s) return '';
+  var parts = s.split('-'), m = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return parseInt(parts[2]) + ' ' + m[parseInt(parts[1]) - 1] + ' ' + parts[0];
+}
+function metLabel(m) {
+  var l = { efectivo: 'Efectivo', nequi: 'Nequi', bancolombia: 'Bancolombia', daviplata: 'Daviplata', 'bre-b': 'Bre-B', pse: 'PSE', otro: 'Otro' };
+  return l[m] || m || '';
+}
+
+// Cerrar modales al hacer clic fuera
+document.querySelectorAll('.ov').forEach(function(o) {
+  o.addEventListener('click', function(e) { if (e.target === o) o.classList.remove('on'); });
+});
+
+// ─── UNIFICACIÓN DE PRÉSTAMOS ────────────────────────────────────────────────
+var unifClienteId = null, unifPrestamos = [];
+
+function abrirUnificacion(cid) {
+  unifClienteId = cid;
+  var cli = DB.clientes.find(function(x) { return x.id === cid; });
+  unifPrestamos = DB.prestamos.filter(function(p) {
+    return p.clienteId === cid && (p.estado === 'activo' || p.estado === 'atrasado');
+  });
+
+  if (unifPrestamos.length < 2) {
+    alert('Este cliente no tiene 2 préstamos activos para unificar.');
+    return;
+  }
+
+  // Calcular saldos actuales
+  var saldo1 = getSaldo(unifPrestamos[0]);
+  var saldo2 = getSaldo(unifPrestamos[1]);
+  var nuevoCapital = saldo1 + saldo2;
+
+  // Mostrar resumen de los préstamos a unificar
+  var freqTxt = function(d) { return { 7: 'Semanal', 15: 'Quincenal', 30: 'Mensual' }[d] || ''; };
+  var estBadge = function(p) {
+    var e = getEst(p, new Date());
+    return e === 'atrasado'
+      ? '<span class="bdg br">En mora</span>'
+      : '<span class="bdg bg">Al día</span>';
+  };
+
+  document.getElementById('unif-prestamos-resumen').innerHTML =
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.2rem">' +
+    [unifPrestamos[0], unifPrestamos[1]].map(function(p, i) {
+      var saldo = i === 0 ? saldo1 : saldo2;
+      return '<div style="background:var(--surface2);border-radius:10px;padding:1rem;border:1px solid var(--border)">' +
+        '<div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;margin-bottom:6px">Préstamo ' + (i + 1) + ' ' + estBadge(p) + '</div>' +
+        '<div style="font-size:20px;font-weight:700;color:var(--accent)">$' + fmt(saldo) + '</div>' +
+        '<div style="font-size:12px;color:var(--text2);margin-top:4px">' +
+          'Capital original: $' + fmt(p.capital) + '<br>' +
+          'Tasa: ' + p.tasa + '% | ' + freqTxt(p.frecDias) + '<br>' +
+          'Inicio: ' + ffecha(p.fechaInicio) +
+        '</div>' +
+      '</div>';
+    }).join('') +
+    '</div>' +
+    '<div style="text-align:center;font-size:12px;color:var(--text2);margin-bottom:.5rem">↓ Los dos préstamos anteriores quedarán cerrados</div>';
+
+  document.getElementById('unif-nuevo-capital').textContent = '$' + fmt(nuevoCapital);
+
+  // Pre-llenar fecha con el día de pago habitual del cliente
+  if (cli) {
+    var dia = cli.diaPago === 'otro' ? parseInt(cli.diaCustom || 15) : parseInt(cli.diaPago || 30);
+    var hoy = new Date();
+    var f = new Date(hoy.getFullYear(), hoy.getMonth() + 1, dia);
+    if (f <= hoy) f = new Date(hoy.getFullYear(), hoy.getMonth() + 2, dia);
+    document.getElementById('unif-fecha').value = f.toISOString().split('T')[0];
+  }
+
+  // Pre-llenar tasa y cuota del préstamo 1
+  document.getElementById('unif-tasa').value = unifPrestamos[0].tasa || 10;
+  document.getElementById('unif-freq').value = unifPrestamos[0].frecDias || 30;
+  document.getElementById('unif-cuota-cap').value = '';
+  document.getElementById('unif-obs').value = 'Unificación de préstamos';
+  document.getElementById('unif-preview').style.display = 'none';
+
+  calcUnifPreview();
+  document.getElementById('modal-unificacion').classList.add('on');
+}
+
+function calcUnifPreview() {
+  var saldo1 = getSaldo(unifPrestamos[0] || { id: null, capital: 0 });
+  var saldo2 = unifPrestamos[1] ? getSaldo(unifPrestamos[1]) : 0;
+  var nuevoCapital = saldo1 + saldo2;
+
+  var cc = parseFloat(document.getElementById('unif-cuota-cap').value);
+  var tasa = parseFloat(document.getElementById('unif-tasa').value) || 10;
+  var fecha = document.getElementById('unif-fecha').value;
+  var freq = parseInt(document.getElementById('unif-freq').value) || 30;
+  var vp = document.getElementById('unif-preview');
+
+  if (!cc || !fecha) { vp.style.display = 'none'; return; }
+
+  var tab = genTabla(nuevoCapital, cc, tasa, fecha, freq);
+  var totInt = tab.reduce(function(s, c) { return s + c.interes; }, 0);
+
+  vp.style.display = 'block';
+  var rows = tab.slice(0, 8).map(function(c) {
+    return '<tr><td style="padding:3px 8px">' + c.n + '</td><td>' + ffecha(c.fecha) + '</td>' +
+      '<td style="color:var(--red)">$' + fmt(c.interes) + '</td>' +
+      '<td>$' + fmt(c.capital) + '</td>' +
+      '<td><strong>$' + fmt(c.total) + '</strong></td>' +
+      '<td>$' + fmt(c.saldoRest) + '</td></tr>';
+  }).join('');
+  var more = tab.length > 8 ? '<tr><td colspan="6" style="padding:3px 8px;color:var(--text3);text-align:center">...' + (tab.length - 8) + ' cuotas más</td></tr>' : '';
+
+  vp.innerHTML =
+    '<div class="alert as" style="margin-top:.5rem">' +
+      tab.length + ' cuotas | Primera: $' + fmt(tab[0].total) + ' | Última: $' + fmt(tab[tab.length - 1].total) +
+      ' | Total intereses: $' + fmt(totInt) + ' | Total a pagar: $' + fmt(nuevoCapital + totInt) +
+    '</div>' +
+    '<div style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;font-size:12px">' +
+    '<table><tr style="background:var(--surface2)">' +
+    '<th style="padding:4px 8px;font-size:10px">#</th><th>Fecha</th><th>Interés</th><th>Capital</th><th>Total</th><th>Saldo</th></tr>' +
+    rows + more + '</table></div>';
+}
+
+async function confirmarUnificacion() {
+  var cc = parseFloat(document.getElementById('unif-cuota-cap').value);
+  var tasa = parseFloat(document.getElementById('unif-tasa').value) || 10;
+  var fecha = document.getElementById('unif-fecha').value;
+  var freq = parseInt(document.getElementById('unif-freq').value) || 30;
+  var obs = document.getElementById('unif-obs').value.trim();
+
+  if (!cc || !fecha) { alert('Completa el abono al capital y la fecha de la primera cuota.'); return; }
+
+  var saldo1 = getSaldo(unifPrestamos[0]);
+  var saldo2 = getSaldo(unifPrestamos[1]);
+  var nuevoCapital = saldo1 + saldo2;
+
+  var snapshot = unifPrestamos.map(function(p) {
+    return { id: p.id, capital: p.capital, saldo: p === unifPrestamos[0] ? saldo1 : saldo2, tasa: p.tasa, fechaInicio: p.fechaInicio };
+  });
+
+  showToast('Unificando préstamos...');
+
+  // 1. Marcar préstamos originales como 'unificado'
+  var r1 = await supa.from('prestamos').update({ estado: 'unificado', cerrado_en: new Date().toISOString() }).eq('id', unifPrestamos[0].id);
+  var r2 = await supa.from('prestamos').update({ estado: 'unificado', cerrado_en: new Date().toISOString() }).eq('id', unifPrestamos[1].id);
+  if (r1.error || r2.error) { alert('Error al cerrar préstamos: ' + (r1.error || r2.error).message); return; }
+
+  // 2. Crear nuevo préstamo unificado
+  var nuevoObj = {
+    cliente_id: unifClienteId,
+    capital_inicial: nuevoCapital,
+    cuota_capital: cc,
+    tasa_interes: tasa,
+    fecha_primera_cuota: fecha,
+    frecuencia_dias: freq,
+    estado: 'activo',
+    observaciones: obs || 'Unificación de préstamos',
+    unificado_desde: [unifPrestamos[0].id, unifPrestamos[1].id]
+  };
+  var r3 = await supa.from('prestamos').insert(nuevoObj).select().single();
+  if (r3.error) { alert('Error al crear préstamo unificado: ' + r3.error.message); return; }
+
+  // 3. Registrar en tabla de unificaciones (auditoría)
+  await supa.from('unificaciones').insert({
+    cliente_id: unifClienteId,
+    prestamo_nuevo_id: r3.data.id,
+    prestamos_origen: [unifPrestamos[0].id, unifPrestamos[1].id],
+    saldos_snapshot: snapshot,
+    fecha_unificacion: new Date().toISOString().split('T')[0]
+  });
+
+  // 4. Actualizar caché local
+  DB.prestamos.find(function(p) { return p.id === unifPrestamos[0].id; }).estado = 'unificado';
+  DB.prestamos.find(function(p) { return p.id === unifPrestamos[1].id; }).estado = 'unificado';
+  DB.prestamos.unshift({
+    id: r3.data.id,
+    clienteId: unifClienteId,
+    capital: nuevoCapital,
+    cuotaCapital: cc,
+    tasa: tasa,
+    fechaInicio: fecha,
+    frecDias: freq,
+    estado: 'activo',
+    obs: obs,
+    creado: r3.data.creado_en
+  });
+
+  showToast('¡Préstamos unificados! ✓');
+  cerrarModal('modal-unificacion');
+  renderPrestamos();
+  renderClientes();
+}
+
+// ─── ESTADO DE CUENTA ────────────────────────────────────────────────────────
+function abrirEstadoCuenta(cid) {
+  var c = DB.clientes.find(function(x) { return x.id === cid; });
+  if (!c) return;
+  var hoy = new Date();
+  var hoyStr = hoy.toISOString().split('T')[0];
+  var hoyFmt = hoy.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
+  var metodos = { efectivo: 'Efectivo', nequi: 'Nequi', bancolombia: 'Bancolombia', daviplata: 'Daviplata', 'bre-b': 'Bre-B', pse: 'PSE', otro: 'Otro' };
+
+  var prestCliente = DB.prestamos.filter(function(p) { return p.clienteId === cid; });
+  var prestActivos = prestCliente.filter(function(p) { return p.estado !== 'pagado' && p.estado !== 'unificado'; });
+
+  var saldoTotal = prestActivos.reduce(function(s, p) { return s + getSaldo(p); }, 0);
+  var totalInteresesPend = prestActivos.reduce(function(s, p) {
+    var tab = genTablaDinamica(p);
+    return s + tab.filter(function(c) { return !cuotaPagada(p.id, c.n); })
+      .reduce(function(ss, c) { return ss + c.interes; }, 0);
+  }, 0);
+
+  // Cuotas vencidas
+  var cuotasVencidas = 0;
+  prestActivos.forEach(function(p) {
+    genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias).forEach(function(c) {
+      if (!cuotaPagada(p.id, c.n) && c.fecha < hoyStr) cuotasVencidas++;
+    });
+  });
+
+  // HTML del cuerpo del estado de cuenta
+  var prestHtml = prestCliente.map(function(p) {
+    var saldo = getSaldo(p);
+    var pagosP = DB.abonos.filter(function(a) { return a.pid === p.id; })
+      .sort(function(a, b) { return a.fecha.localeCompare(b.fecha); });
+    var est = getEst(p, hoy);
+    var estLabel = { activo: 'Al día', atrasado: 'EN MORA', pagado: 'Pagado' };
+    var estColor = { activo: 'var(--green)', atrasado: 'var(--red)', pagado: 'var(--text2)' };
+    var tab = genTablaDinamica(p);
+
+    // Próximas 3 cuotas pendientes
+    var proximas = tab.filter(function(c) { return !cuotaPagada(p.id, c.n); }).slice(0, 3);
+
+    var histRows = pagosP.length ? pagosP.map(function(a) {
+      return '<tr style="border-bottom:1px solid #eee">' +
+        '<td style="padding:4px 8px">' + ffecha(a.fecha) + '</td>' +
+        '<td>' + (a.cuota ? 'Cuota #' + a.cuota : 'Abono libre') + '</td>' +
+        '<td style="text-align:right;color:#9b2335">$' + fmt(a.interes || 0) + '</td>' +
+        '<td style="text-align:right">$' + fmt(a.capital || 0) + '</td>' +
+        '<td style="text-align:right"><strong>$' + fmt((a.interes || 0) + (a.capital || 0)) + '</strong></td>' +
+        '<td>' + (metodos[a.metodo] || a.metodo || '') + '</td>' +
+        '</tr>';
+    }).join('') : '<tr><td colspan="6" style="padding:8px;color:#999;text-align:center">Sin pagos registrados</td></tr>';
+
+    var proxRows = proximas.map(function(c) {
+      var vencida = c.fecha < hoyStr;
+      return '<tr style="border-bottom:1px solid #eee' + (vencida ? ';background:#fff8f8' : '') + '">' +
+        '<td style="padding:4px 8px' + (vencida ? ';color:#9b2335;font-weight:600' : '') + '">' + ffecha(c.fecha) + (vencida ? ' ⚠ VENCIDA' : '') + '</td>' +
+        '<td>Cuota #' + c.n + '</td>' +
+        '<td style="text-align:right;color:#9b2335">$' + fmt(c.interes) + '</td>' +
+        '<td style="text-align:right">$' + fmt(c.capital) + '</td>' +
+        '<td style="text-align:right"><strong>$' + fmt(c.total) + '</strong></td>' +
+        '</tr>';
+    }).join('');
+
+    var freqTxt = { 7: 'Semanal', 15: 'Quincenal', 30: 'Mensual' }[p.frecDias] || 'Mensual';
+
+    return '<div style="border:1px solid #ddd;border-radius:10px;padding:1.2rem;margin-bottom:1.2rem">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:.8rem">' +
+        '<div>' +
+          '<div style="font-weight:700;font-size:14px">Préstamo — ' + freqTxt + ' | ' + p.tasa + '% de interés</div>' +
+          '<div style="font-size:12px;color:#666;margin-top:2px">Inicio: ' + ffecha(p.fechaInicio) + ' | Capital: $' + fmt(p.capital) + ' | Cuota capital: $' + fmt(p.cuotaCapital) + '</div>' +
+        '</div>' +
+        '<div style="text-align:right">' +
+          '<div style="font-size:11px;color:#999">SALDO PENDIENTE</div>' +
+          '<div style="font-size:20px;font-weight:700;color:' + (p.estado === 'pagado' ? '#2d6a4f' : '#1a4e8c') + '">$' + fmt(saldo) + '</div>' +
+          '<div style="font-size:12px;font-weight:600;color:' + estColor[est] + '">' + estLabel[est] + '</div>' +
+        '</div>' +
+      '</div>' +
+      (proximas.length ? '<div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;margin:.6rem 0 .3rem">Próximas cuotas</div>' +
+      '<table style="width:100%;font-size:12px;border-collapse:collapse"><tr style="background:#f5f5f5"><th style="padding:4px 8px;text-align:left">Fecha</th><th>Descripción</th><th style="text-align:right">Interés</th><th style="text-align:right">Capital</th><th style="text-align:right">Total</th></tr>' + proxRows + '</table>' : '') +
+      (pagosP.length ? '<div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;margin:.8rem 0 .3rem">Historial de pagos</div>' +
+      '<table style="width:100%;font-size:12px;border-collapse:collapse"><tr style="background:#f5f5f5"><th style="padding:4px 8px;text-align:left">Fecha</th><th>Concepto</th><th style="text-align:right">Interés</th><th style="text-align:right">Capital</th><th style="text-align:right">Total</th><th>Método</th></tr>' + histRows + '</table>' : '') +
+      '</div>';
+  }).join('');
+
+  var body =
+    '<div style="font-family:Georgia,serif;color:#222;font-size:13px;line-height:1.7">' +
+    '<div style="text-align:center;border-bottom:2px solid #222;padding-bottom:1rem;margin-bottom:1.5rem">' +
+      '<div style="font-size:22px;font-weight:700;letter-spacing:1px">ESTADO DE CUENTA</div>' +
+      '<div style="font-size:12px;color:#666;margin-top:4px">Fecha de emisión: ' + hoyFmt + '</div>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;background:#f9f9f9;border-radius:8px;padding:1rem">' +
+      '<div><div style="font-size:11px;color:#888;text-transform:uppercase;font-weight:700">Cliente</div><div style="font-weight:700;font-size:15px">' + c.nombre + '</div>' +
+        (c.cedula ? '<div style="font-size:12px;color:#555">C.C. ' + c.cedula + '</div>' : '') +
+        (c.tel ? '<div style="font-size:12px;color:#555">Tel: ' + c.tel + '</div>' : '') +
+        (c.ciudad ? '<div style="font-size:12px;color:#555">' + c.ciudad + '</div>' : '') +
+      '</div>' +
+      '<div style="text-align:right">' +
+        '<div style="font-size:11px;color:#888;text-transform:uppercase;font-weight:700">Resumen</div>' +
+        '<div style="font-size:13px;margin-top:4px">Préstamos activos: <strong>' + prestActivos.length + '</strong></div>' +
+        '<div style="font-size:13px">Cuotas vencidas: <strong style="color:' + (cuotasVencidas > 0 ? '#9b2335' : '#2d6a4f') + '">' + cuotasVencidas + '</strong></div>' +
+        '<div style="font-size:13px">Saldo total: <strong style="font-size:16px">$' + fmt(saldoTotal) + '</strong></div>' +
+        '<div style="font-size:12px;color:#888">+ $' + fmt(totalInteresesPend) + ' en intereses pendientes</div>' +
+      '</div>' +
+    '</div>' +
+    (prestActivos.length === 0 && prestCliente.length > 0
+      ? '<div style="text-align:center;padding:1rem;background:#d8f3dc;border-radius:8px;color:#2d6a4f;font-weight:600;margin-bottom:1rem">✓ Todos los préstamos de este cliente están pagados</div>'
+      : '') +
+    prestHtml +
+    '<div style="border-top:1px solid #ccc;margin-top:1.5rem;padding-top:1rem;font-size:11px;color:#888;text-align:center">' +
+      'Este documento es informativo y fue generado el ' + hoyFmt + '.' +
+    '</div>' +
+    '</div>';
+
+  document.getElementById('estado-cuenta-body').innerHTML = body;
+  document.getElementById('modal-estado-cuenta').classList.add('on');
+}
+
+function imprimirEstadoCuenta() {
+  var c = document.getElementById('estado-cuenta-body').innerHTML;
+  var win = window.open('', '_blank');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Estado de Cuenta</title>' +
+    '<style>body{font-family:Georgia,serif;max-width:750px;margin:2rem auto;font-size:13px;line-height:1.7;color:#222}' +
+    'table{width:100%;border-collapse:collapse}th,td{padding:4px 8px}' +
+    '@media print{@page{margin:1.5cm}}</style></head><body>' + c +
+    '<script>window.print();<\/script></body></html>');
+  win.document.close();
+}
+
+// ─── REPORTES / DASHBOARD DE RENTABILIDAD ────────────────────────────────────
+var repPeriodo = 'mes';
+var chartIngresos = null, chartCartera = null;
+
+function setRepPeriodo(btn, periodo) {
+  repPeriodo = periodo;
+  document.querySelectorAll('.rep-filter').forEach(function(b) { b.classList.remove('on-rep'); b.style.background=''; b.style.color=''; });
+  btn.classList.add('on-rep');
+  btn.style.background = 'var(--accent)'; btn.style.color = '#fff';
+  var cr = document.getElementById('rep-custom-range');
+  cr.style.display = periodo === 'custom' ? 'flex' : 'none';
+  if (periodo !== 'custom') renderReportes();
+}
+
+function getRepRango() {
+  var hoy = new Date();
+  if (repPeriodo === 'mes') {
+    return {
+      desde: new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0],
+      hasta: new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).toISOString().split('T')[0]
+    };
+  }
+  if (repPeriodo === 'anio') {
+    return {
+      desde: new Date(hoy.getFullYear(), 0, 1).toISOString().split('T')[0],
+      hasta: new Date(hoy.getFullYear(), 11, 31).toISOString().split('T')[0]
+    };
+  }
+  if (repPeriodo === 'custom') {
+    return {
+      desde: document.getElementById('rep-desde').value || '2000-01-01',
+      hasta: document.getElementById('rep-hasta').value || hoy.toISOString().split('T')[0]
+    };
+  }
+  // todo
+  return { desde: '2000-01-01', hasta: '2099-12-31' };
+}
+
+function renderReportes() {
+  var rango = getRepRango();
+  var desde = rango.desde, hasta = rango.hasta;
+
+  // Pagos en el período
+  var pagosRango = DB.abonos.filter(function(a) {
+    return a.fecha >= desde && a.fecha <= hasta;
+  });
+
+  var totalIntereses = pagosRango.reduce(function(s, a) { return s + (a.interes || 0); }, 0);
+  var totalCapitalRecup = pagosRango.reduce(function(s, a) { return s + (a.capital || 0); }, 0);
+  var totalCobrado = totalIntereses + totalCapitalRecup;
+
+  // Cartera actual (siempre en tiempo real, no filtrada por período)
+  var hoy = new Date();
+  var prestActivos = DB.prestamos.filter(function(p) { return p.estado !== 'pagado' && p.estado !== 'unificado'; });
+  var prestVencidos = DB.prestamos.filter(function(p) { return getEst(p, hoy) === 'atrasado'; });
+  var prestPagados = DB.prestamos.filter(function(p) { return p.estado === 'pagado'; });
+
+  var carteraTotal = prestActivos.reduce(function(s, p) { return s + getSaldo(p); }, 0);
+  var carteraVencida = prestVencidos.reduce(function(s, p) { return s + getSaldo(p); }, 0);
+  var pctMora = carteraTotal > 0 ? Math.round(carteraVencida * 100 / carteraTotal) : 0;
+
+  // Intereses esperados totales (de todos los préstamos activos)
+  var interesesEsperadosTotal = prestActivos.reduce(function(s, p) {
+    var tab = genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias);
+    return s + tab.reduce(function(ss, c) { return ss + c.interes; }, 0);
+  }, 0);
+
+  // ROI aproximado: intereses cobrados / capital total prestado
+  var capitalTotalPrestado = DB.prestamos.reduce(function(s, p) { return s + p.capital; }, 0);
+  var totalInteresesHistorico = DB.abonos.reduce(function(s, a) { return s + (a.interes || 0); }, 0);
+  var roi = capitalTotalPrestado > 0 ? (totalInteresesHistorico / capitalTotalPrestado * 100).toFixed(1) : 0;
+
+  // ── KPIs ──
+  document.getElementById('rep-kpis').innerHTML =
+    kpiCard('Intereses cobrados', '$' + fmt(totalIntereses), 'En el período seleccionado', 'g') +
+    kpiCard('Capital recuperado', '$' + fmt(totalCapitalRecup), 'En el período seleccionado', 'b') +
+    kpiCard('Cartera vencida', '$' + fmt(carteraVencida), pctMora + '% de la cartera activa', 'r') +
+    kpiCard('Cartera activa', '$' + fmt(carteraTotal), prestActivos.length + ' préstamo(s) activo(s)', '') +
+    kpiCard('Préstamos pagados', prestPagados.length + '', 'Completados históricamente', '') +
+    kpiCard('ROI histórico', roi + '%', 'Intereses / capital total prestado', 'g');
+
+  // ── GRÁFICO: ingresos por mes ──
+  var meses = {};
+  DB.abonos.forEach(function(a) {
+    if (!a.fecha) return;
+    var key = a.fecha.slice(0, 7); // YYYY-MM
+    if (!meses[key]) meses[key] = 0;
+    meses[key] += (a.interes || 0);
+  });
+  var mesesKeys = Object.keys(meses).sort().slice(-12); // últimos 12 meses
+  var mesesVals = mesesKeys.map(function(k) { return meses[k]; });
+  var mesesLabels = mesesKeys.map(function(k) {
+    var parts = k.split('-');
+    var nombres = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    return nombres[parseInt(parts[1]) - 1] + ' ' + parts[0].slice(2);
+  });
+
+  if (chartIngresos) { chartIngresos.destroy(); chartIngresos = null; }
+  var ctxI = document.getElementById('chart-ingresos').getContext('2d');
+  chartIngresos = new Chart(ctxI, {
+    type: 'bar',
+    data: {
+      labels: mesesLabels.length ? mesesLabels : ['Sin datos'],
+      datasets: [{
+        label: 'Intereses cobrados',
+        data: mesesVals.length ? mesesVals : [0],
+        backgroundColor: 'rgba(45,106,79,0.7)',
+        borderColor: '#2d6a4f',
+        borderWidth: 1,
+        borderRadius: 5
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          ticks: { callback: function(v) { return '$' + v.toLocaleString('es-CO'); }, font: { size: 11 } },
+          grid: { color: '#f0ede6' }
+        },
+        x: { ticks: { font: { size: 11 } }, grid: { display: false } }
+      }
+    }
+  });
+
+  // ── GRÁFICO: distribución de cartera ──
+  var capActiva = prestActivos.filter(function(p) { return getEst(p, hoy) === 'activo'; })
+    .reduce(function(s, p) { return s + getSaldo(p); }, 0);
+  var capVencida = carteraVencida;
+  var capPagado = prestPagados.reduce(function(s, p) { return s + p.capital; }, 0);
+
+  if (chartCartera) { chartCartera.destroy(); chartCartera = null; }
+  var ctxC = document.getElementById('chart-cartera').getContext('2d');
+  chartCartera = new Chart(ctxC, {
+    type: 'doughnut',
+    data: {
+      labels: ['Al día', 'En mora', 'Capital recuperado (pagados)'],
+      datasets: [{
+        data: [capActiva, capVencida, capPagado],
+        backgroundColor: ['rgba(45,106,79,0.8)', 'rgba(155,35,53,0.8)', 'rgba(26,78,140,0.8)'],
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 12 }, padding: 12 } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              return ' $' + ctx.raw.toLocaleString('es-CO');
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // ── PARETO ──
+  var porCliente = {};
+  DB.abonos.forEach(function(a) {
+    var p = DB.prestamos.find(function(x) { return x.id === a.pid; });
+    if (!p) return;
+    var cli = DB.clientes.find(function(c) { return c.id === p.clienteId; });
+    var nombre = cli ? cli.nombre : 'Desconocido';
+    if (!porCliente[nombre]) porCliente[nombre] = { interes: 0, capital: 0, pagos: 0 };
+    porCliente[nombre].interes += (a.interes || 0);
+    porCliente[nombre].capital += (a.capital || 0);
+    porCliente[nombre].pagos += 1;
+  });
+
+  var listaClientes = Object.keys(porCliente).map(function(nombre) {
+    return { nombre: nombre, interes: porCliente[nombre].interes, capital: porCliente[nombre].capital, pagos: porCliente[nombre].pagos };
+  }).sort(function(a, b) { return b.interes - a.interes; });
+
+  var totalInt = listaClientes.reduce(function(s, c) { return s + c.interes; }, 0);
+  var acum = 0;
+  var paretoRows = listaClientes.map(function(c, i) {
+    acum += c.interes;
+    var pct = totalInt > 0 ? (c.interes / totalInt * 100).toFixed(1) : 0;
+    var acumPct = totalInt > 0 ? (acum / totalInt * 100).toFixed(1) : 0;
+    var esClave = acumPct <= 80 || (acum - c.interes < totalInt * 0.8);
+    return '<tr' + (esClave ? ' style="background:var(--green-bg)"' : '') + '>' +
+      '<td><strong>' + (i + 1) + '. ' + c.nombre + '</strong>' +
+      (esClave ? ' <span class="bdg bg" style="font-size:10px">Clave</span>' : '') + '</td>' +
+      '<td class="tr money" style="color:var(--green)">$' + fmt(c.interes) + '</td>' +
+      '<td class="tr money">$' + fmt(c.capital) + '</td>' +
+      '<td class="tr">' + pct + '%</td>' +
+      '<td class="tr"><div style="display:flex;align-items:center;gap:6px">' +
+        '<div class="pb" style="min-width:80px"><div class="pbf" style="width:' + acumPct + '%;background:var(--accent)"></div></div>' +
+        '<span style="font-size:11px;color:var(--text2)">' + acumPct + '%</span>' +
+      '</div></td>' +
+      '</tr>';
+  }).join('');
+
+  document.getElementById('rep-pareto').innerHTML = listaClientes.length
+    ? '<table><thead><tr><th>Cliente</th><th class="tr">Intereses pagados</th><th class="tr">Capital pagado</th><th class="tr">% del total</th><th class="tr">Acumulado</th></tr></thead><tbody>' + paretoRows + '</tbody></table>'
+    : '<div class="empty"><p>Sin datos de pagos todavía</p></div>';
+
+  // ── RESUMEN FINANCIERO ──
+  var totalEsperadoPeriodo = DB.prestamos.reduce(function(s, p) {
+    var tab = genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias);
+    return s + tab.filter(function(c) { return c.fecha >= desde && c.fecha <= hasta; })
+      .reduce(function(ss, c) { return ss + c.interes; }, 0);
+  }, 0);
+  var tasaCobro = totalEsperadoPeriodo > 0 ? Math.round(totalIntereses * 100 / totalEsperadoPeriodo) : 0;
+
+  document.getElementById('rep-resumen').innerHTML =
+    '<table><tbody>' +
+    fila('Intereses esperados en el período', '$' + fmt(totalEsperadoPeriodo), '') +
+    fila('Intereses efectivamente cobrados', '$' + fmt(totalIntereses), 'color:var(--green)') +
+    fila('Diferencia (no cobrado)', '$' + fmt(Math.max(0, totalEsperadoPeriodo - totalIntereses)), 'color:var(--red)') +
+    fila('Tasa de cobro del período', tasaCobro + '%', tasaCobro >= 80 ? 'color:var(--green)' : 'color:var(--red)') +
+    fila('Capital total prestado (histórico)', '$' + fmt(capitalTotalPrestado), '') +
+    fila('Capital pendiente de recuperar', '$' + fmt(carteraTotal), '') +
+    '</tbody></table>';
+}
+
+function kpiCard(lbl, val, sub, tipo) {
+  var cls = tipo === 'g' ? 'g' : tipo === 'r' ? 'r' : tipo === 'b' ? 'b' : '';
+  return '<div class="sc ' + cls + '"><div class="sc-lbl">' + lbl + '</div><div class="sc-val money">' + val + '</div><div class="sc-sub">' + sub + '</div></div>';
+}
+function fila(lbl, val, estilo) {
+  return '<tr><td style="color:var(--text2)">' + lbl + '</td><td class="tr money" style="font-weight:600;' + estilo + '">' + val + '</td></tr>';
+}
+
+// ─── EXPORTACIÓN A EXCEL ─────────────────────────────────────────────────────
+function exportarExcel() {
+  showToast('Generando Excel...');
+  var hoy = new Date();
+  var hoyStr = hoy.toISOString().split('T')[0];
+  var wb = XLSX.utils.book_new();
+  var metLabel2 = function(m) {
+    return { efectivo:'Efectivo', nequi:'Nequi', bancolombia:'Bancolombia', daviplata:'Daviplata', 'bre-b':'Bre-B', pse:'PSE', otro:'Otro' }[m] || m || '';
+  };
+
+  // ── HOJA 1: RESUMEN ──────────────────────────────────────────────────────────
+  var prestActivos = DB.prestamos.filter(function(p) { return p.estado !== 'pagado' && p.estado !== 'unificado'; });
+  var prestVencidos = DB.prestamos.filter(function(p) { return getEst(p, hoy) === 'atrasado'; });
+  var carteraTotal = prestActivos.reduce(function(s, p) { return s + getSaldo(p); }, 0);
+  var carteraVencida = prestVencidos.reduce(function(s, p) { return s + getSaldo(p); }, 0);
+  var totalIntereses = DB.abonos.reduce(function(s, a) { return s + (a.interes || 0); }, 0);
+  var totalCapRecup = DB.abonos.reduce(function(s, a) { return s + (a.capital || 0); }, 0);
+  var capitalPrestado = DB.prestamos.reduce(function(s, p) { return s + p.capital; }, 0);
+  var roi = capitalPrestado > 0 ? (totalIntereses / capitalPrestado * 100).toFixed(2) : 0;
+
+  var resumenData = [
+    ['CREDICONTROL — RESUMEN GENERAL', ''],
+    ['Generado el:', hoyStr],
+    ['', ''],
+    ['MÉTRICA', 'VALOR'],
+    ['Total clientes', DB.clientes.length],
+    ['Préstamos activos', prestActivos.length],
+    ['Préstamos en mora', prestVencidos.length],
+    ['Préstamos pagados', DB.prestamos.filter(function(p) { return p.estado === 'pagado'; }).length],
+    ['', ''],
+    ['Cartera activa total ($)', carteraTotal],
+    ['Cartera en mora ($)', carteraVencida],
+    ['% cartera en mora', carteraTotal > 0 ? parseFloat((carteraVencida / carteraTotal * 100).toFixed(2)) : 0],
+    ['', ''],
+    ['Capital total prestado ($)', capitalPrestado],
+    ['Capital recuperado ($)', totalCapRecup],
+    ['Intereses cobrados histórico ($)', totalIntereses],
+    ['ROI histórico (%)', parseFloat(roi)],
+    ['Total pagos registrados', DB.abonos.length]
+  ];
+  var wsResumen = XLSX.utils.aoa_to_sheet(resumenData);
+  wsResumen['!cols'] = [{ wch: 35 }, { wch: 20 }];
+  XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
+
+  // ── HOJA 2: CLIENTES ─────────────────────────────────────────────────────────
+  var clientesHeader = ['ID', 'Nombre', 'Cédula', 'Teléfono', 'Ciudad', 'Referido por', 'Día de pago', 'Método de pago', 'Cuenta/Celular', 'Préstamos totales', 'Saldo total ($)', 'Notas'];
+  var clientesRows = DB.clientes.map(function(c) {
+    var prestC = DB.prestamos.filter(function(p) { return p.clienteId === c.id; });
+    var saldoC = prestC.filter(function(p) { return p.estado !== 'pagado'; })
+      .reduce(function(s, p) { return s + getSaldo(p); }, 0);
+    var diaLabel = c.diaPago === 'otro' ? 'Día ' + c.diaCustom : 'Día ' + c.diaPago;
+    return [c.id, c.nombre, c.cedula || '', c.tel || '', c.ciudad || '', c.ref || '', diaLabel, metLabel2(c.metodoPago), c.cuenta || '', prestC.length, saldoC, c.notas || ''];
+  });
+  var wsClientes = XLSX.utils.aoa_to_sheet([clientesHeader].concat(clientesRows));
+  wsClientes['!cols'] = [{ wch: 36 }, { wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 12 }, { wch: 15 }, { wch: 18 }, { wch: 10 }, { wch: 15 }, { wch: 30 }];
+  XLSX.utils.book_append_sheet(wb, wsClientes, 'Clientes');
+
+  // ── HOJA 3: PRÉSTAMOS ────────────────────────────────────────────────────────
+  var prestHeader = ['ID Préstamo', 'Cliente', 'Capital inicial ($)', 'Saldo actual ($)', 'Cuota capital ($)', 'Tasa interés (%)', 'Frecuencia', 'Fecha primera cuota', 'Estado', 'Total cuotas', 'Cuotas pagadas', 'Intereses cobrados ($)', 'Capital cobrado ($)', 'Observaciones', 'Fecha creación'];
+  var freqLabel = function(d) { return { 7: 'Semanal', 15: 'Quincenal', 30: 'Mensual' }[d] || 'Mensual'; };
+  var prestRows = DB.prestamos.map(function(p) {
+    var cli = DB.clientes.find(function(c) { return c.id === p.clienteId; });
+    var saldo = getSaldo(p);
+    var pagosP = DB.abonos.filter(function(a) { return a.pid === p.id; });
+    var intCob = pagosP.reduce(function(s, a) { return s + (a.interes || 0); }, 0);
+    var capCob = pagosP.reduce(function(s, a) { return s + (a.capital || 0); }, 0);
+    var tab = genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias);
+    var cuotasPag = tab.filter(function(c) { return cuotaPagada(p.id, c.n); }).length;
+    var estLabel = { activo: 'Activo', atrasado: 'En mora', pagado: 'Pagado' };
+    return [p.id, cli ? cli.nombre : '', p.capital, saldo, p.cuotaCapital, p.tasa, freqLabel(p.frecDias), p.fechaInicio, estLabel[p.estado] || p.estado, tab.length, cuotasPag, intCob, capCob, p.obs || '', (p.creado || '').slice(0, 10)];
+  });
+  var wsPrestamos = XLSX.utils.aoa_to_sheet([prestHeader].concat(prestRows));
+  wsPrestamos['!cols'] = [{ wch: 36 }, { wch: 25 }, { wch: 18 }, { wch: 15 }, { wch: 15 }, { wch: 14 }, { wch: 12 }, { wch: 18 }, { wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 18 }, { wch: 18 }, { wch: 25 }, { wch: 15 }];
+  XLSX.utils.book_append_sheet(wb, wsPrestamos, 'Préstamos');
+
+  // ── HOJA 4: PAGOS ────────────────────────────────────────────────────────────
+  var pagosHeader = ['ID Pago', 'Cliente', 'ID Préstamo', 'Cuota #', 'Fecha pago', 'Interés pagado ($)', 'Capital pagado ($)', 'Total pagado ($)', 'Método', 'Completo', 'Nota', 'Fecha registro'];
+  var pagosRows = DB.abonos.map(function(a) {
+    var p = DB.prestamos.find(function(x) { return x.id === a.pid; });
+    var cli = p ? DB.clientes.find(function(c) { return c.id === p.clienteId; }) : null;
+    return [a.id, cli ? cli.nombre : '', a.pid, a.cuota || 'Libre', a.fecha, a.interes || 0, a.capital || 0, (a.interes || 0) + (a.capital || 0), metLabel2(a.metodo), a.completo ? 'Sí' : 'No', a.nota || '', (a.creado || '').slice(0, 10)];
+  }).sort(function(a, b) { return a[4].localeCompare(b[4]); });
+  var wsPagos = XLSX.utils.aoa_to_sheet([pagosHeader].concat(pagosRows));
+  wsPagos['!cols'] = [{ wch: 36 }, { wch: 25 }, { wch: 36 }, { wch: 10 }, { wch: 12 }, { wch: 18 }, { wch: 18 }, { wch: 15 }, { wch: 14 }, { wch: 10 }, { wch: 25 }, { wch: 15 }];
+  XLSX.utils.book_append_sheet(wb, wsPagos, 'Pagos');
+
+  // ── HOJA 5: AMORTIZACIÓN COMPLETA ────────────────────────────────────────────
+  var amorHeader = ['Cliente', 'ID Préstamo', 'Cuota #', 'Fecha esperada', 'Saldo anterior ($)', 'Interés esperado ($)', 'Capital esperado ($)', 'Total esperado ($)', 'Saldo restante ($)', 'Estado'];
+  var amorRows = [];
+  DB.prestamos.forEach(function(p) {
+    var cli = DB.clientes.find(function(c) { return c.id === p.clienteId; });
+    var tab = genTablaDinamica(p);
+    tab.forEach(function(c) {
+      var pagada = cuotaPagada(p.id, c.n);
+      var vencida = !pagada && c.fecha < hoyStr;
+      var estado = pagada ? 'Pagada' : vencida ? 'Vencida' : 'Pendiente';
+      amorRows.push([cli ? cli.nombre : '', p.id, c.n, c.fecha, c.saldoAnt, c.interes, c.capital, c.total, c.saldoRest, estado]);
+    });
+  });
+  var wsAmor = XLSX.utils.aoa_to_sheet([amorHeader].concat(amorRows));
+  wsAmor['!cols'] = [{ wch: 25 }, { wch: 36 }, { wch: 10 }, { wch: 15 }, { wch: 18 }, { wch: 20 }, { wch: 20 }, { wch: 18 }, { wch: 18 }, { wch: 12 }];
+  XLSX.utils.book_append_sheet(wb, wsAmor, 'Amortización');
+
+  // Descargar
+  var fecha = hoyStr.replace(/-/g, '');
+  XLSX.writeFile(wb, 'CrediControl_' + fecha + '.xlsx');
+  showToast('Excel descargado ✓');
+}
+
+// Inicializar botón activo de reportes
+document.addEventListener('DOMContentLoaded', function() {
+  var btn = document.querySelector('.rep-filter.on-rep');
+  if (btn) { btn.style.background = 'var(--accent)'; btn.style.color = '#fff'; }
+});
+
+// ─── INICIO ───────────────────────────────────────────────────────────────────
+if (sessionStorage.getItem('cc_auth') === '1') {
+  initDB();
+}
+</script>
+</body>
+</html>
