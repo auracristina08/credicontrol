@@ -116,7 +116,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
     <div class="login-brand">Credi<span>Control</span></div>
     <div class="login-sub">Gestión de préstamos · Acceso privado</div>
     <div class="login-err" id="login-err">Usuario o contraseña incorrectos</div>
-    <div class="fg"><label>Usuario</label><input type="text" id="login-user" placeholder="Usuario" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="fg"><label>Correo electrónico</label><input type="email" id="login-user" placeholder="tu@correo.com" autocomplete="email" onkeydown="if(event.key==='Enter')doLogin()"></div>
     <div class="fg"><label>Contraseña</label><input type="password" id="login-pass" placeholder="Contraseña" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
     <button class="btn btn-p" style="width:100%;justify-content:center;margin-top:.5rem;padding:10px" onclick="doLogin()">Ingresar</button>
   </div>
@@ -481,38 +481,30 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <script>
-// ─── CREDENCIALES DE ACCESO (puedes cambiarlas aquí) ─────────────────────────
-var APP_USER = 'admin';
-var APP_PASS = 'credi2024';
-
+// ─── AUTENTICACIÓN (Supabase Auth) ───────────────────────────────────────────
 function doLogout() {
-  confirm2('Cerrar sesion', 'Seras devuelto a la pantalla de login.', function() {
-    sessionStorage.removeItem('cc_auth');
+  confirm2('Cerrar sesion', 'Seras devuelto a la pantalla de login.', async function() {
+    await supa.auth.signOut();
     location.reload();
   });
 }
 
-function doLogin() {
-  var u = document.getElementById('login-user').value.trim();
-  var p = document.getElementById('login-pass').value;
-  if (u === APP_USER && p === APP_PASS) {
-    sessionStorage.setItem('cc_auth', '1');
-    document.getElementById('login-overlay').style.display = 'none';
-    initDB();
-  } else {
+async function doLogin() {
+  var email = document.getElementById('login-user').value.trim();
+  var pass = document.getElementById('login-pass').value;
+  var btn = document.querySelector('#login-overlay .btn-p');
+  btn.textContent = 'Verificando...'; btn.disabled = true;
+  var result = await supa.auth.signInWithPassword({ email: email, password: pass });
+  btn.textContent = 'Ingresar'; btn.disabled = false;
+  if (result.error) {
     document.getElementById('login-err').style.display = 'block';
     document.getElementById('login-pass').value = '';
     document.getElementById('login-pass').focus();
+  } else {
+    document.getElementById('login-overlay').style.display = 'none';
+    initDB();
   }
 }
-
-// Comprobar si ya hay sesión activa
-(function() {
-  if (sessionStorage.getItem('cc_auth') === '1') {
-    document.getElementById('login-overlay').style.display = 'none';
-    // initDB se llama al final del script, ok
-  }
-})();
 
 // ─── CONFIGURACIÓN SUPABASE ───────────────────────────────────────────────────
 var SUPA_URL = 'https://jyhjhfntlmcxqzourxtq.supabase.co';
@@ -2058,10 +2050,13 @@ document.addEventListener('DOMContentLoaded', function() {
   if (btn) { btn.style.background = 'var(--accent)'; btn.style.color = '#fff'; }
 });
 
-// ─── INICIO ───────────────────────────────────────────────────────────────────
-if (sessionStorage.getItem('cc_auth') === '1') {
-  initDB();
-}
+// ─── INICIO: verificar sesión activa en Supabase ─────────────────────────────
+supa.auth.getSession().then(function(result) {
+  if (result.data && result.data.session) {
+    document.getElementById('login-overlay').style.display = 'none';
+    initDB();
+  }
+});
 </script>
 </body>
 </html>
