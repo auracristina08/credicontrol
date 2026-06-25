@@ -616,9 +616,21 @@ function showPage(p) {
   if (p === 'cobros') renderCobros();
 }
 
-// ─── LÓGICA FINANCIERA (sin cambios) ─────────────────────────────────────────
-function genTabla(capital, cuotaCap, tasa, fechaInicio, frecDias) {
-  var t = [], freq = parseInt(frecDias) || 30, saldo = capital, f = new Date(fechaInicio), n = 1;
+// ─── LÓGICA FINANCIERA ────────────────────────────────────────────────────────
+// fechaDesembolso (opcional): si se pasa y hay días de cola, se inserta Cuota 0
+function genTabla(capital, cuotaCap, tasa, fechaInicio, frecDias, fechaDesembolso) {
+  var t = [], freq = parseInt(frecDias) || 30, saldo = capital, f = new Date(fechaInicio + 'T12:00:00'), n = 1;
+  // Cuota 0: cola de días entre fecha de desembolso y primer corte del mismo mes
+  if (fechaDesembolso && fechaDesembolso < fechaInicio) {
+    var dD = new Date(fechaDesembolso + 'T12:00:00');
+    var corte = new Date(dD.getFullYear(), dD.getMonth(), f.getDate());
+    corte.setHours(12, 0, 0, 0);
+    var diffDias = Math.round((corte - dD) / 86400000);
+    if (diffDias > 0 && corte < f) {
+      var intCola = Math.round((saldo * tasa / 100) / freq * diffDias);
+      if (intCola > 0) t.push({ n: 0, fecha: corte.toISOString().split('T')[0], saldoAnt: saldo, interes: intCola, capital: 0, total: intCola, saldoRest: saldo, esCola: true });
+    }
+  }
   while (saldo > 0.5 && n <= 500) {
     var int = Math.round(saldo * tasa / 100), cap = Math.min(cuotaCap, saldo);
     t.push({ n: n, fecha: f.toISOString().split('T')[0], saldoAnt: saldo, interes: int, capital: cap, total: int + cap, saldoRest: saldo - cap });
@@ -634,11 +646,24 @@ function getSaldo(p) {
 }
 
 function genTablaDinamica(p) {
-  var freq = parseInt(p.frecDias) || 30, t = [], saldo = p.capital, f = new Date(p.fechaInicio), n = 1;
+  var freq = parseInt(p.frecDias) || 30, t = [], saldo = p.capital, f = new Date(p.fechaInicio + 'T12:00:00'), n = 1;
+  // solo cuotas regulares (n>0) reducen capital; Cuota 0 tiene capital=0
   var absCap = {};
-  DB.abonos.filter(function(a) { return a.pid === p.id && a.cuota; }).forEach(function(a) {
+  DB.abonos.filter(function(a) { return a.pid === p.id && a.cuota != null && a.cuota > 0; }).forEach(function(a) {
     absCap[a.cuota] = (absCap[a.cuota] || 0) + (a.capital || 0);
   });
+  // Cuota 0 (cola de días)
+  var fechaDesembolso = p.creado ? p.creado.slice(0, 10) : null;
+  if (fechaDesembolso && fechaDesembolso < p.fechaInicio) {
+    var dD = new Date(fechaDesembolso + 'T12:00:00');
+    var corte = new Date(dD.getFullYear(), dD.getMonth(), f.getDate());
+    corte.setHours(12, 0, 0, 0);
+    var diffDias = Math.round((corte - dD) / 86400000);
+    if (diffDias > 0 && corte < f) {
+      var intCola = Math.round((saldo * (p.tasa || 10) / 100) / freq * diffDias);
+      if (intCola > 0) t.push({ n: 0, fecha: corte.toISOString().split('T')[0], saldoAnt: saldo, interes: intCola, capital: 0, total: intCola, saldoRest: saldo, esCola: true });
+    }
+  }
   while (saldo > 0.5 && n <= 500) {
     var int = Math.round(saldo * (p.tasa || 10) / 100);
     var capPagado = absCap[n] || 0;
@@ -658,7 +683,8 @@ function getEst(p, hoyD) {
   if (p.estado === 'pagado') return 'pagado';
   if (p.estado === 'unificado') return 'unificado';
   var hoy = (hoyD || new Date()).toISOString().split('T')[0];
-  var t = genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias);
+  var fechaDesembolso = p.creado ? p.creado.slice(0, 10) : null;
+  var t = genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias, fechaDesembolso);
   return t.some(function(c) { return !cuotaPagada(p.id, c.n) && c.fecha < hoy; }) ? 'atrasado' : 'activo';
 }
 
@@ -672,7 +698,7 @@ function renderDashboard() {
   act.forEach(function(p) {
     cartera += getSaldo(p);
     if (getEst(p, hoy) === 'atrasado') atras++;
-    genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias).forEach(function(c) {
+    genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias, p.creado ? p.creado.slice(0,10) : null).forEach(function(c) {
       if (!cuotaPagada(p.id, c.n) && c.fecha === h) cobHoy++;
     });
   });
@@ -686,7 +712,7 @@ function renderDashboard() {
   var cols = [];
   DB.prestamos.filter(function(p) { return p.estado !== 'pagado' && p.estado !== 'unificado'; }).forEach(function(p) {
     var cli = DB.clientes.find(function(c) { return c.id === p.clienteId; });
-    genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias).forEach(function(c) {
+    genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias, p.creado ? p.creado.slice(0,10) : null).forEach(function(c) {
       var fd = new Date(c.fecha + 'T12:00:00');
       if (fd >= hoy && fd <= fin && !cuotaPagada(p.id, c.n))
         cols.push(Object.assign({}, c, { pid: p.id, cli: cli ? cli.nombre : '?', esHoy: c.fecha === h }));
@@ -943,11 +969,13 @@ function calcPreview() {
   var freq = parseInt(document.getElementById('pres-freq').value) || 30;
   var vp = document.getElementById('vista-previa');
   if (!cap || !cc || !fecha) { vp.style.display = 'none'; return; }
-  var tab = genTabla(cap, cc, tasa, fecha, freq);
+  var hoyDesembolso = new Date().toISOString().split('T')[0];
+  var tab = genTabla(cap, cc, tasa, fecha, freq, hoyDesembolso);
   var totInt = tab.reduce(function(s, c) { return s + c.interes; }, 0);
   vp.style.display = 'block';
   var rows = tab.slice(0, 10).map(function(c) {
-    return '<tr><td style="padding:4px 10px">' + c.n + '</td><td>' + ffecha(c.fecha) + '</td>' +
+    var etiqueta = c.n === 0 ? '<span style="font-size:10px;color:var(--amber);font-weight:700">Cola</span>' : c.n;
+    return '<tr' + (c.n === 0 ? ' style="background:var(--amber-bg,#fff8e1)"' : '') + '><td style="padding:4px 10px">' + etiqueta + '</td><td>' + ffecha(c.fecha) + '</td>' +
       '<td style="color:var(--red)">$' + fmt(c.interes) + '</td><td>$' + fmt(c.capital) + '</td>' +
       '<td><strong>$' + fmt(c.total) + '</strong></td><td>$' + fmt(c.saldoRest) + '</td></tr>';
   }).join('');
@@ -1074,12 +1102,15 @@ function renderDetalle(id) {
     var vn = !pg && c.fecha < hoyStr;
     var esH = c.fecha === hoyStr;
     var ab = abs.find(function(a) { return a.cuota === c.n; });
-    var ncCls = pg ? 'background:var(--green-bg);color:var(--green)' : vn ? 'background:var(--red-bg);color:var(--red)' : '';
+    var ncCls = c.n === 0
+      ? 'background:#fff3cd;color:#856404;font-size:9px'
+      : pg ? 'background:var(--green-bg);color:var(--green)' : vn ? 'background:var(--red-bg);color:var(--red)' : '';
+    var ncLabel = c.n === 0 ? 'COLA' : c.n;
     var accion = pg
       ? ('<span class="bdg bg">Pagado</span>' + (ab && ab.nota ? '<br><span style="font-size:10px;color:var(--text3)">' + ab.nota + '</span>' : ''))
       : (est !== 'pagado' ? '<button class="btn btn-g bsm" onclick="abrirAbono(\'' + p.id + '\',' + c.n + ')">Cobrar</button>' : '');
-    return '<div class="crow ' + (pg ? 'cpg' : vn ? 'cvn' : '') + '">' +
-      '<div><div class="nc" style="' + ncCls + '">' + c.n + '</div></div>' +
+    return '<div class="crow ' + (pg ? 'cpg' : vn ? 'cvn' : '') + (c.n === 0 ? '" style="background:#fffde7' : '') + '">' +
+      '<div><div class="nc" style="' + ncCls + '">' + ncLabel + '</div></div>' +
       '<div style="font-size:12px">' + ffecha(c.fecha) + (esH ? '<br><span style="font-size:10px;color:var(--amber);font-weight:700">HOY</span>' : '') + '</div>' +
       '<div class="money" style="font-size:12px">$' + fmt(c.saldoAnt) + '</div>' +
       '<div class="money" style="color:var(--red);font-size:12px">$' + fmt(c.interes) + '</div>' +
@@ -1094,7 +1125,7 @@ function renderDetalle(id) {
       abs.map(function(a) {
         return '<tr>' +
           '<td>' + ffecha(a.fecha) + '</td>' +
-          '<td>' + (a.cuota ? '#' + a.cuota : 'Libre') + '</td>' +
+          '<td>' + (a.cuota != null ? (a.cuota === 0 ? 'Cola' : '#' + a.cuota) : 'Libre') + '</td>' +
           '<td class="money" style="color:var(--red)">$' + fmt(a.interes || 0) + '</td>' +
           '<td class="money">$' + fmt(a.capital || 0) + '</td>' +
           '<td class="money"><strong>$' + fmt((a.interes || 0) + (a.capital || 0)) + '</strong></td>' +
@@ -1166,13 +1197,14 @@ function abrirAbono(pid, ncuota) {
   document.getElementById('file-comprobante').value = '';
   toggleComprobante();
   var info = '';
-  if (ncuota) {
+  if (ncuota != null) {
     var tab = genTablaDinamica(p), c = tab.find(function(x) { return x.n === ncuota; });
     if (c) {
       document.getElementById('ab-interes').value = c.interes;
-      document.getElementById('ab-capital').value = c.capital;
+      document.getElementById('ab-capital').value = c.capital > 0 ? c.capital : '';
+      var labelCuota = ncuota === 0 ? 'CUOTA COLA (días previos)' : 'CUOTA #' + ncuota;
       info = '<div style="background:var(--surface2);border-radius:10px;padding:.9rem;margin-bottom:1rem;font-size:13px">' +
-        '<div style="font-weight:600;color:var(--text2);margin-bottom:5px">CUOTA #' + ncuota + ' | ' + ffecha(c.fecha) + '</div>' +
+        '<div style="font-weight:600;color:var(--text2);margin-bottom:5px">' + labelCuota + ' | ' + ffecha(c.fecha) + '</div>' +
         '<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:var(--text2)">Interes esperado</span><strong style="color:var(--red)">$' + fmt(c.interes) + '</strong></div>' +
         '<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:var(--text2)">Capital esperado</span><strong>$' + fmt(c.capital) + '</strong></div>' +
         '<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:var(--text2)">Total esperado</span><strong>$' + fmt(c.total) + '</strong></div></div>' +
@@ -1210,7 +1242,7 @@ function calcAbonoTotal() {
   var i = parseFloat(document.getElementById('ab-interes').value) || 0;
   var c = parseFloat(document.getElementById('ab-capital').value) || 0;
   document.getElementById('ab-total').textContent = 'Total: $' + fmt(i + c);
-  if (abCuota) {
+  if (abCuota != null) {
     var p = DB.prestamos.find(function(x) { return x.id === abPid; });
     var tab = genTablaDinamica(p), cu = tab.find(function(x) { return x.n === abCuota; });
     if (cu && c > 0 && c < cu.capital) {
@@ -1233,15 +1265,16 @@ async function guardarAbono() {
   var nota = document.getElementById('ab-nota').value.trim();
   var p = DB.prestamos.find(function(x) { return x.id === abPid; });
   var completo = false;
-  if (abCuota) {
+  if (abCuota != null) {
     var tab = genTablaDinamica(p), c = tab.find(function(x) { return x.n === abCuota; });
-    completo = c ? (interes >= c.interes && capital > 0) : true;
+    // Cuota 0 (cola): solo tiene interes, capital esperado = 0
+    completo = c ? (c.capital === 0 ? interes >= c.interes : (interes >= c.interes && capital > 0)) : true;
   } else completo = true;
 
   showToast('Registrando pago...');
   var supaObj = {
     prestamo_id: abPid,
-    numero_cuota: abCuota || null,
+    numero_cuota: abCuota != null ? abCuota : null,
     interes_pagado: interes,
     capital_pagado: capital,
     fecha_pago: fecha,
@@ -1305,7 +1338,7 @@ function renderCobros() {
   var pendHoy = [], vencidas = [];
   DB.prestamos.filter(function(p) { return p.estado !== 'pagado' && p.estado !== 'unificado'; }).forEach(function(p) {
     var cli = DB.clientes.find(function(c) { return c.id === p.clienteId; });
-    genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias).forEach(function(c) {
+    genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias, p.creado ? p.creado.slice(0,10) : null).forEach(function(c) {
       if (cuotaPagada(p.id, c.n)) return;
       var row = Object.assign({}, c, { pid: p.id, cli: cli ? cli.nombre : '?', tel: cli ? cli.tel || '' : '' });
       if (c.fecha === h) pendHoy.push(row);
@@ -1345,13 +1378,14 @@ function renderCobros() {
 function abrirContrato(pid) {
   var p = DB.prestamos.find(function(x) { return x.id === pid; });
   var cli = DB.clientes.find(function(c) { return c.id === p.clienteId; });
-  var tab = genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias);
+  var tab = genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias, p.creado ? p.creado.slice(0,10) : null);
   var totInt = tab.reduce(function(s, c) { return s + c.interes; }, 0);
   var hoyStr = new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
   var freqTxt = { 7: 'semanal', 15: 'quincenal', 30: 'mensual' }[p.frecDias] || 'mensual';
   var metodos = { efectivo: 'Efectivo en mano', nequi: 'Nequi', bancolombia: 'Transferencia Bancolombia', daviplata: 'Daviplata', 'bre-b': 'Bre-B', pse: 'PSE', otro: 'Otro medio acordado' };
   var tabRows = tab.slice(0, 6).map(function(c) {
-    return '<tr style="border-bottom:1px solid #eee"><td style="padding:4px 8px">' + c.n + '</td><td>' + ffecha(c.fecha) + '</td>' +
+    var nLabel = c.n === 0 ? 'Cola' : c.n;
+    return '<tr style="border-bottom:1px solid #eee' + (c.n === 0 ? ';background:#fffde7' : '') + '"><td style="padding:4px 8px">' + nLabel + '</td><td>' + ffecha(c.fecha) + '</td>' +
       '<td>$' + fmt(c.interes) + '</td><td>$' + fmt(c.capital) + '</td>' +
       '<td><strong>$' + fmt(c.total) + '</strong></td><td>$' + fmt(c.saldoRest) + '</td></tr>';
   }).join('');
