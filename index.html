@@ -323,7 +323,15 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
 <div class="ov" id="modal-prestamo">
 <div class="modal wide">
   <div class="mtitle">Nuevo préstamo</div>
-  <div class="fg"><label>Cliente *</label><select id="pres-cliente" onchange="autoFillDiaPago()"></select></div>
+  <div class="fg">
+    <label>Cliente *</label>
+    <div style="position:relative">
+      <input type="text" id="pres-cliente-search" placeholder="Escribir nombre para buscar..." autocomplete="off"
+        oninput="filtrarClientesAC()" onfocus="filtrarClientesAC()" onblur="cerrarAC()" style="width:100%">
+      <input type="hidden" id="pres-cliente">
+      <div id="ac-cliente-list" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;max-height:220px;overflow-y:auto;z-index:200;box-shadow:0 6px 18px rgba(0,0,0,.15);margin-top:2px"></div>
+    </div>
+  </div>
   <div class="frow">
     <div class="fg"><label>Capital prestado ($) *</label><input type="number" id="pres-capital" placeholder="500000" oninput="calcPreview()"></div>
     <div class="fg"><label>Abono fijo al capital por cuota ($) *</label><input type="number" id="pres-cuota-cap" placeholder="100000" oninput="calcPreview()"></div>
@@ -339,9 +347,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
     </div>
   </div>
   <div class="frow">
+    <div class="fg"><label>Fecha de desembolso *</label><input type="date" id="pres-desembolso" oninput="calcPreview()"></div>
     <div class="fg"><label>Fecha primera cuota *</label><input type="date" id="pres-fecha" oninput="calcPreview()"></div>
-    <div class="fg"><label>Observaciones</label><input type="text" id="pres-obs" placeholder="Motivo, garantia..."></div>
   </div>
+  <div class="fg"><label>Observaciones</label><input type="text" id="pres-obs" placeholder="Motivo, garantia..."></div>
   <div id="vista-previa" style="display:none"></div>
   <div class="mfooter">
     <button class="btn btn-o" onclick="cerrarModal('modal-prestamo')">Cancelar</button>
@@ -556,6 +565,7 @@ async function initDB() {
         frecDias: parseInt(p.frecuencia_dias),
         estado: p.estado,
         obs: p.observaciones || '',
+        desembolso: p.fecha_desembolso || null,
         creado: p.creado_en
       };
     });
@@ -653,7 +663,7 @@ function genTablaDinamica(p) {
     absCap[a.cuota] = (absCap[a.cuota] || 0) + (a.capital || 0);
   });
   // Cuota 0 (cola de días)
-  var fechaDesembolso = p.creado ? p.creado.slice(0, 10) : null;
+  var fechaDesembolso = p.desembolso || (p.creado ? p.creado.slice(0, 10) : null);
   if (fechaDesembolso && fechaDesembolso < p.fechaInicio) {
     var dD = new Date(fechaDesembolso + 'T12:00:00');
     var corte = new Date(dD.getFullYear(), dD.getMonth(), f.getDate());
@@ -683,7 +693,7 @@ function getEst(p, hoyD) {
   if (p.estado === 'pagado') return 'pagado';
   if (p.estado === 'unificado') return 'unificado';
   var hoy = (hoyD || new Date()).toISOString().split('T')[0];
-  var fechaDesembolso = p.creado ? p.creado.slice(0, 10) : null;
+  var fechaDesembolso = p.desembolso || (p.creado ? p.creado.slice(0, 10) : null);
   var t = genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias, fechaDesembolso);
   return t.some(function(c) { return !cuotaPagada(p.id, c.n) && c.fecha < hoy; }) ? 'atrasado' : 'activo';
 }
@@ -698,7 +708,7 @@ function renderDashboard() {
   act.forEach(function(p) {
     cartera += getSaldo(p);
     if (getEst(p, hoy) === 'atrasado') atras++;
-    genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias, p.creado ? p.creado.slice(0,10) : null).forEach(function(c) {
+    genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias, p.desembolso || (p.creado ? p.creado.slice(0,10) : null)).forEach(function(c) {
       if (!cuotaPagada(p.id, c.n) && c.fecha === h) cobHoy++;
     });
   });
@@ -712,7 +722,7 @@ function renderDashboard() {
   var cols = [];
   DB.prestamos.filter(function(p) { return p.estado !== 'pagado' && p.estado !== 'unificado'; }).forEach(function(p) {
     var cli = DB.clientes.find(function(c) { return c.id === p.clienteId; });
-    genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias, p.creado ? p.creado.slice(0,10) : null).forEach(function(c) {
+    genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias, p.desembolso || (p.creado ? p.creado.slice(0,10) : null)).forEach(function(c) {
       var fd = new Date(c.fecha + 'T12:00:00');
       if (fd >= hoy && fd <= fin && !cuotaPagada(p.id, c.n))
         cols.push(Object.assign({}, c, { pid: p.id, cli: cli ? cli.nombre : '?', esHoy: c.fecha === h }));
@@ -931,22 +941,55 @@ function verDocs(cid) {
 function abrirModalPrestamo() {
   if (!DB.clientes.length) { alert('Primero agrega un cliente.'); return; }
   var sel = document.getElementById('pres-cliente');
-  sel.innerHTML = DB.clientes.slice().sort(function(a, b) { return a.nombre.localeCompare(b.nombre, 'es'); })
-    .map(function(c) { return '<option value="' + c.id + '">' + c.nombre + '</option>'; }).join('');
+  // resetear autocomplete
+  document.getElementById('pres-cliente-search').value = '';
+  document.getElementById('pres-cliente').value = '';
+  document.getElementById('ac-cliente-list').style.display = 'none';
   var d = new Date(); d.setDate(d.getDate() + 30);
+  document.getElementById('pres-desembolso').value = new Date().toISOString().split('T')[0];
   document.getElementById('pres-fecha').value = d.toISOString().split('T')[0];
   ['pres-capital', 'pres-cuota-cap', 'pres-obs'].forEach(function(id) { document.getElementById(id).value = ''; });
   document.getElementById('pres-tasa').value = '10';
   document.getElementById('vista-previa').style.display = 'none';
-  autoFillDiaPago();
   document.getElementById('modal-prestamo').classList.add('on');
+}
+
+// ─── AUTOCOMPLETE CLIENTES ────────────────────────────────────────────────────
+function filtrarClientesAC() {
+  var q = document.getElementById('pres-cliente-search').value.toLowerCase();
+  var lista = DB.clientes.slice().sort(function(a, b) { return a.nombre.localeCompare(b.nombre, 'es'); });
+  if (q) lista = lista.filter(function(c) { return c.nombre.toLowerCase().includes(q); });
+  var drop = document.getElementById('ac-cliente-list');
+  if (!lista.length) { drop.innerHTML = '<div style="padding:10px 14px;color:var(--text3);font-size:13px">Sin resultados</div>'; drop.style.display = 'block'; return; }
+  drop.innerHTML = lista.map(function(c) {
+    return '<div onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'\'" onmousedown="seleccionarClienteAC(\'' + c.id + '\',\'' + c.nombre.replace(/'/g, '\\\'') + '\')" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);font-size:14px">' + c.nombre + '</div>';
+  }).join('');
+  drop.style.display = 'block';
+}
+
+function seleccionarClienteAC(id, nombre) {
+  document.getElementById('pres-cliente').value = id;
+  document.getElementById('pres-cliente-search').value = nombre;
+  document.getElementById('ac-cliente-list').style.display = 'none';
+  autoFillDiaPago();
+}
+
+function cerrarAC() {
+  setTimeout(function() {
+    var d = document.getElementById('ac-cliente-list');
+    if (d) d.style.display = 'none';
+    // si el texto no coincide con ningún cliente seleccionado, limpiar
+    var idActual = document.getElementById('pres-cliente').value;
+    if (!idActual) document.getElementById('pres-cliente-search').value = '';
+  }, 160);
 }
 
 function abrirModalPrestamoCliente(cid) {
   showPage('prestamos');
   setTimeout(function() {
     abrirModalPrestamo();
-    document.getElementById('pres-cliente').value = cid;
+    var c = DB.clientes.find(function(x) { return x.id === cid; });
+    if (c) { document.getElementById('pres-cliente').value = cid; document.getElementById('pres-cliente-search').value = c.nombre; }
     autoFillDiaPago();
   }, 80);
 }
@@ -969,7 +1012,7 @@ function calcPreview() {
   var freq = parseInt(document.getElementById('pres-freq').value) || 30;
   var vp = document.getElementById('vista-previa');
   if (!cap || !cc || !fecha) { vp.style.display = 'none'; return; }
-  var hoyDesembolso = new Date().toISOString().split('T')[0];
+  var hoyDesembolso = document.getElementById('pres-desembolso').value || new Date().toISOString().split('T')[0];
   var tab = genTabla(cap, cc, tasa, fecha, freq, hoyDesembolso);
   var totInt = tab.reduce(function(s, c) { return s + c.interes; }, 0);
   vp.style.display = 'block';
@@ -992,6 +1035,7 @@ async function guardarPrestamo() {
   var fechaInicio = document.getElementById('pres-fecha').value;
   var frecDias = parseInt(document.getElementById('pres-freq').value) || 30;
   var obs = document.getElementById('pres-obs').value.trim();
+  var fechaDesembolso = document.getElementById('pres-desembolso').value || new Date().toISOString().split('T')[0];
   if (!cid || !capital || !cuotaCapital || !fechaInicio) { alert('Completa los campos requeridos'); return; }
 
   // Verificar limite de 2 préstamos activos
@@ -1013,7 +1057,8 @@ async function guardarPrestamo() {
     fecha_primera_cuota: fechaInicio,
     frecuencia_dias: frecDias,
     estado: 'activo',
-    observaciones: obs || null
+    observaciones: obs || null,
+    fecha_desembolso: fechaDesembolso
   };
 
   var r = await supa.from('prestamos').insert(supaObj).select().single();
@@ -1029,6 +1074,7 @@ async function guardarPrestamo() {
     frecDias: frecDias,
     estado: 'activo',
     obs: obs,
+    desembolso: fechaDesembolso,
     creado: r.data.creado_en
   });
 
@@ -1338,7 +1384,7 @@ function renderCobros() {
   var pendHoy = [], vencidas = [];
   DB.prestamos.filter(function(p) { return p.estado !== 'pagado' && p.estado !== 'unificado'; }).forEach(function(p) {
     var cli = DB.clientes.find(function(c) { return c.id === p.clienteId; });
-    genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias, p.creado ? p.creado.slice(0,10) : null).forEach(function(c) {
+    genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias, p.desembolso || (p.creado ? p.creado.slice(0,10) : null)).forEach(function(c) {
       if (cuotaPagada(p.id, c.n)) return;
       var row = Object.assign({}, c, { pid: p.id, cli: cli ? cli.nombre : '?', tel: cli ? cli.tel || '' : '' });
       if (c.fecha === h) pendHoy.push(row);
@@ -1378,7 +1424,7 @@ function renderCobros() {
 function abrirContrato(pid) {
   var p = DB.prestamos.find(function(x) { return x.id === pid; });
   var cli = DB.clientes.find(function(c) { return c.id === p.clienteId; });
-  var tab = genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias, p.creado ? p.creado.slice(0,10) : null);
+  var tab = genTabla(p.capital, p.cuotaCapital, p.tasa, p.fechaInicio, p.frecDias, p.desembolso || (p.creado ? p.creado.slice(0,10) : null));
   var totInt = tab.reduce(function(s, c) { return s + c.interes; }, 0);
   var hoyStr = new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
   var freqTxt = { 7: 'semanal', 15: 'quincenal', 30: 'mensual' }[p.frecDias] || 'mensual';
