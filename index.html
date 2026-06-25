@@ -828,17 +828,30 @@ async function guardarCliente() {
 function eliminarCliente(cid) {
   var c = DB.clientes.find(function(x) { return x.id === cid; });
   if (!c) return;
-  var prestamosCliente = DB.prestamos.filter(function(p) { return p.clienteId === cid && (p.estado === 'activo' || p.estado === 'atrasado'); });
-  if (prestamosCliente.length > 0) {
-    alert('No se puede eliminar: este cliente tiene ' + prestamosCliente.length + ' préstamo(s) activo(s). Liquida los préstamos primero.');
-    return;
-  }
-  confirm2('Eliminar cliente', '¿Eliminar a ' + c.nombre + '? Esta acción no se puede deshacer.', async function() {
-    showToast('Eliminando cliente...');
+  var prestamosActivos = DB.prestamos.filter(function(p) { return p.clienteId === cid && (p.estado === 'activo' || p.estado === 'atrasado'); });
+  var todosLosPrestamos = DB.prestamos.filter(function(p) { return p.clienteId === cid; });
+  var msg = prestamosActivos.length > 0
+    ? '⚠️ Este cliente tiene ' + prestamosActivos.length + ' préstamo(s) activo(s). Se eliminarán el cliente y TODO su historial (préstamos y pagos). ¿Confirmas?'
+    : '¿Eliminar a ' + c.nombre + ' y todo su historial? Esta acción no se puede deshacer.';
+  confirm2('Eliminar cliente', msg, async function() {
+    showToast('Eliminando...');
+    // 1. Eliminar pagos de todos sus préstamos
+    for (var i = 0; i < todosLosPrestamos.length; i++) {
+      await supa.from('pagos').delete().eq('prestamo_id', todosLosPrestamos[i].id);
+    }
+    // 2. Eliminar unificaciones del cliente
+    await supa.from('unificaciones').delete().eq('cliente_id', cid);
+    // 3. Eliminar préstamos
+    await supa.from('prestamos').delete().eq('cliente_id', cid);
+    // 4. Eliminar cliente
     var r = await supa.from('clientes').delete().eq('id', cid);
     if (r.error) { alert('Error al eliminar: ' + r.error.message); return; }
+    // 5. Actualizar caché local
+    var idsPrests = todosLosPrestamos.map(function(p) { return p.id; });
+    DB.abonos = DB.abonos.filter(function(a) { return !idsPrests.includes(a.pid); });
+    DB.prestamos = DB.prestamos.filter(function(p) { return p.clienteId !== cid; });
     DB.clientes = DB.clientes.filter(function(x) { return x.id !== cid; });
-    showToast('Cliente eliminado');
+    showToast('Cliente eliminado ✓');
     renderClientes();
   });
 }
