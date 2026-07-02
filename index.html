@@ -337,7 +337,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
     <div class="fg"><label>Abono fijo al capital por cuota ($) *</label><input type="number" id="pres-cuota-cap" placeholder="100000" oninput="calcPreview()"></div>
   </div>
   <div class="frow">
-    <div class="fg"><label>Tasa de interes por cuota (%)</label><input type="number" id="pres-tasa" value="10" min="0" max="100" oninput="calcPreview()"></div>
+    <div class="fg"><label>Tasa de interés mensual (%)</label><input type="number" id="pres-tasa" value="10" min="0" max="100" oninput="calcPreview()"></div>
     <div class="fg"><label>Frecuencia de pago</label>
       <select id="pres-freq" onchange="calcPreview()">
         <option value="30">Mensual (30 dias)</option>
@@ -637,12 +637,12 @@ function genTabla(capital, cuotaCap, tasa, fechaInicio, frecDias, fechaDesembols
     corte.setHours(12, 0, 0, 0);
     var diffDias = Math.round((corte - dD) / 86400000);
     if (diffDias > 0 && corte < f) {
-      var intCola = Math.round((saldo * tasa / 100) / freq * diffDias);
+      var intCola = Math.round(saldo * tasa / 100 / 30 * diffDias);
       if (intCola > 0) t.push({ n: 0, fecha: corte.toISOString().split('T')[0], saldoAnt: saldo, interes: intCola, capital: 0, total: intCola, saldoRest: saldo, esCola: true });
     }
   }
   while (saldo > 0.5 && n <= 500) {
-    var int = Math.round(saldo * tasa / 100), cap = Math.min(cuotaCap, saldo);
+    var int = Math.round(saldo * tasa / 100 * freq / 30), cap = Math.min(cuotaCap, saldo);
     t.push({ n: n, fecha: f.toISOString().split('T')[0], saldoAnt: saldo, interes: int, capital: cap, total: int + cap, saldoRest: saldo - cap });
     saldo -= cap; var nf = new Date(f); nf.setDate(nf.getDate() + freq); f = nf; n++;
   }
@@ -670,12 +670,12 @@ function genTablaDinamica(p) {
     corte.setHours(12, 0, 0, 0);
     var diffDias = Math.round((corte - dD) / 86400000);
     if (diffDias > 0 && corte < f) {
-      var intCola = Math.round((saldo * (p.tasa || 10) / 100) / freq * diffDias);
+      var intCola = Math.round(saldo * (p.tasa || 10) / 100 / 30 * diffDias);
       if (intCola > 0) t.push({ n: 0, fecha: corte.toISOString().split('T')[0], saldoAnt: saldo, interes: intCola, capital: 0, total: intCola, saldoRest: saldo, esCola: true });
     }
   }
   while (saldo > 0.5 && n <= 500) {
-    var int = Math.round(saldo * (p.tasa || 10) / 100);
+    var int = Math.round(saldo * (p.tasa || 10) / 100 * freq / 30);
     var capPagado = absCap[n] || 0;
     var capEsp = Math.min(p.cuotaCapital, saldo);
     t.push({ n: n, fecha: f.toISOString().split('T')[0], saldoAnt: saldo, interes: int, capital: capEsp, total: int + capEsp, saldoRest: saldo - capEsp });
@@ -909,7 +909,7 @@ function renderClientes() {
     var dpCls = { 5: 'd5', 15: 'd15', 30: 'd30' }[c.diaPago] || 'dother';
     var dpLabel = c.diaPago === 'otro' ? 'Dia ' + c.diaCustom : 'Dia ' + c.diaPago;
     var ndocs = ((c.docs && c.docs.cedula) ? c.docs.cedula.length : 0) + ((c.docs && c.docs.letra) ? c.docs.letra.length : 0);
-    var docBtn = ndocs > 0 ? '<button class="btn btn-o bsm" onclick="verDocs(\'' + c.id + '\')">Docs (' + ndocs + ')</button>' : '';
+    var docBtn = ndocs > 0 ? '<button class="btn btn-o bsm" onclick="verDocs(\'' + c.id + '\',this)">Docs (' + ndocs + ')</button>' : '';
     return '<tr>' +
       '<td><strong>' + c.nombre + '</strong>' + (c.notas ? '<br><span style="font-size:11px;color:var(--text3)">' + c.notas + '</span>' : '') + '</td>' +
       '<td>' + (c.cedula || '') + '</td>' +
@@ -931,10 +931,50 @@ function renderClientes() {
   w.innerHTML = '<table><thead><tr><th>Nombre</th><th>Cedula</th><th>Telefono</th><th>Referido por</th><th>Dia pago</th><th>Metodo pago</th><th>Prestamos</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>';
 }
 
-function verDocs(cid) {
+function verDocs(cid, btn) {
+  // Cerrar dropdown previo si existe
+  var prev = document.getElementById('docs-dropdown');
+  if (prev) { prev.remove(); if (prev.dataset.cid === cid) return; }
+
   var c = DB.clientes.find(function(x) { return x.id === cid; });
-  var docs = [].concat(c.docs && c.docs.cedula ? c.docs.cedula : []).concat(c.docs && c.docs.letra ? c.docs.letra : []);
-  docs.forEach(function(d) { var a = document.createElement('a'); a.href = d.data; a.download = d.nombre; a.click(); });
+  var cedulas = (c.docs && c.docs.cedula) ? c.docs.cedula : [];
+  var letras = (c.docs && c.docs.letra) ? c.docs.letra : [];
+  var docs = cedulas.map(function(d) { return { nombre: d.nombre, data: d.data, tipo: 'Cédula' }; })
+                    .concat(letras.map(function(d) { return { nombre: d.nombre, data: d.data, tipo: 'Pagaré' }; }));
+  if (!docs.length) return;
+
+  var dd = document.createElement('div');
+  dd.id = 'docs-dropdown';
+  dd.dataset.cid = cid;
+  dd.style.cssText = 'position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:1000;min-width:200px;overflow:hidden;';
+  dd.innerHTML = docs.map(function(d, i) {
+    return '<div onclick="descargarDoc(' + i + ',\'' + cid + '\')" style="padding:9px 14px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'\'">' +
+      '<span style="font-size:10px;font-weight:700;background:var(--blue-bg);color:var(--blue);padding:2px 6px;border-radius:4px">' + d.tipo + '</span>' +
+      '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + d.nombre + '</span>' +
+      '<span style="color:var(--text3);font-size:11px">↓</span></div>';
+  }).join('');
+
+  document.body.appendChild(dd);
+  var r = btn.getBoundingClientRect();
+  dd.style.top = (r.bottom + 4 + window.scrollY) + 'px';
+  dd.style.left = Math.min(r.left, window.innerWidth - 220) + 'px';
+
+  // Cerrar al hacer clic fuera
+  setTimeout(function() {
+    document.addEventListener('click', function closeDD(e) {
+      if (!dd.contains(e.target) && e.target !== btn) { dd.remove(); document.removeEventListener('click', closeDD); }
+    });
+  }, 0);
+}
+
+function descargarDoc(idx, cid) {
+  var c = DB.clientes.find(function(x) { return x.id === cid; });
+  var cedulas = (c.docs && c.docs.cedula) ? c.docs.cedula : [];
+  var letras = (c.docs && c.docs.letra) ? c.docs.letra : [];
+  var docs = cedulas.concat(letras);
+  var d = docs[idx]; if (!d) return;
+  var a = document.createElement('a'); a.href = d.data; a.download = d.nombre; a.click();
+  var dd = document.getElementById('docs-dropdown'); if (dd) dd.remove();
 }
 
 // ─── PRÉSTAMOS ────────────────────────────────────────────────────────────────
