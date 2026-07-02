@@ -1498,7 +1498,7 @@ function abrirContrato(pid) {
     ((cli && cli.ref && cli.ref !== 'N/A') ? '<p><strong>REFERIDO POR:</strong> ' + cli.ref + '</p>' : '') +
     '<h3>CONDICIONES DEL PRESTAMO</h3>' +
     '<p>El PRESTAMISTA entrega en calidad de prestamo la suma de <strong>$' + fmt(p.capital) + ' pesos colombianos</strong>, que el DEUDOR recibe a entera satisfaccion, obligandose a devolverlos bajo las siguientes condiciones:</p>' +
-    '<p>Tasa de interes: <strong>' + p.tasa + '% ' + freqTxt + '</strong> sobre saldo insoluto.</p>' +
+    '<p>Tasa de interes: <strong>' + p.tasa + '% mensual</strong> sobre saldo insoluto. El interes se cobra una vez al mes independientemente de la frecuencia de pago.</p>' +
     '<p>Abono fijo al capital: <strong>$' + fmt(p.cuotaCapital) + ' por cuota</strong>. Se acepta abono parcial al capital.</p>' +
     '<p>Frecuencia de pago: <strong>' + freqTxt.charAt(0).toUpperCase() + freqTxt.slice(1) + '.</strong></p>' +
     '<p>Fecha primera cuota: <strong>' + ffecha(p.fechaInicio) + '.</strong></p>' +
