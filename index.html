@@ -641,8 +641,15 @@ function genTabla(capital, cuotaCap, tasa, fechaInicio, frecDias, fechaDesembols
       if (intCola > 0) t.push({ n: 0, fecha: corte.toISOString().split('T')[0], saldoAnt: saldo, interes: intCola, capital: 0, total: intCola, saldoRest: saldo, esCola: true });
     }
   }
+  // El interés se cobra mensualmente (cada 30 días), sin importar la frecuencia de pago.
+  // En quincenal: cuota 1 lleva interés, cuota 2 solo capital; cuota 3 lleva interés, etc.
+  var ultimaFechaInteres = null;
   while (saldo > 0.5 && n <= 500) {
-    var int = Math.round(saldo * tasa / 100 * freq / 30), cap = Math.min(cuotaCap, saldo);
+    var cobrarInteres = ultimaFechaInteres === null ||
+      Math.round((f - ultimaFechaInteres) / 86400000) >= 30;
+    var int = cobrarInteres ? Math.round(saldo * tasa / 100) : 0;
+    if (cobrarInteres) ultimaFechaInteres = new Date(f);
+    var cap = Math.min(cuotaCap, saldo);
     t.push({ n: n, fecha: f.toISOString().split('T')[0], saldoAnt: saldo, interes: int, capital: cap, total: int + cap, saldoRest: saldo - cap });
     saldo -= cap; var nf = new Date(f); nf.setDate(nf.getDate() + freq); f = nf; n++;
   }
@@ -674,8 +681,13 @@ function genTablaDinamica(p) {
       if (intCola > 0) t.push({ n: 0, fecha: corte.toISOString().split('T')[0], saldoAnt: saldo, interes: intCola, capital: 0, total: intCola, saldoRest: saldo, esCola: true });
     }
   }
+  // El interés se cobra mensualmente (cada 30 días), sin importar la frecuencia de pago.
+  var ultimaFechaInteres = null;
   while (saldo > 0.5 && n <= 500) {
-    var int = Math.round(saldo * (p.tasa || 10) / 100 * freq / 30);
+    var cobrarInteres = ultimaFechaInteres === null ||
+      Math.round((f - ultimaFechaInteres) / 86400000) >= 30;
+    var int = cobrarInteres ? Math.round(saldo * (p.tasa || 10) / 100) : 0;
+    if (cobrarInteres) ultimaFechaInteres = new Date(f);
     var capPagado = absCap[n] || 0;
     var capEsp = Math.min(p.cuotaCapital, saldo);
     t.push({ n: n, fecha: f.toISOString().split('T')[0], saldoAnt: saldo, interes: int, capital: capEsp, total: int + capEsp, saldoRest: saldo - capEsp });
